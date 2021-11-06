@@ -3,26 +3,30 @@
 ##  mediawikixml2jotter.sh: convert an xml dump from Mediawiki to jotter
 ##  2021-11-06, MvdS:  initial version.
 
-# for INFILE in `ls dumpBackup/*.xml`
-for INFILE in `ls dumpBackup/LISA_facts_and_data.xml`
+# for INFILE in `ls dumpBackup/LISA_facts_and_data.xml`
+for INFILE in `ls dumpBackup/*.xml`
 do
     OUTFILE=`echo $INFILE | sed -e 's|dumpBackup\/|jotters\/|' -e 's|\.xml|\.jot|' -e 's|_|-|g'`
-    echo "$INFILE -> $OUTFILE"
+    # echo "$INFILE -> $OUTFILE"
+    echo -n "."
     sed \
 	-e '/^  <\/*page>$/d' \
 	-e '/^    <ns>0<\/ns>$/d' \
-	-e '/^    <id>[0-9]*<\/id>$/d' \
+	-e '/^ *<id>[0-9]*<\/id>$/d' \
 	-e '/^    <\/*revision>$/d' \
-	-e '/^      <id>[0-9]*<\/id>$/d' \
 	-e '/^      <parentid>[0-9]*<\/parentid>$/d' \
 	-e '/^      <\/*contributor>$/d' \
 	-e '/^      <model>wikitext<\/model>$/d' \
 	-e '/^      <format>text\/x-wiki<\/format>$/d' \
 	-e '/^      <comment>.*<\/comment>/d' \
-	-e '/^        <ip>[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}<\/ip>/d' \
-	-e '/^       <text xml:space="preserve" bytes="[0-9]*">$/d' \
+	-e '/^ *<ip>[0-9\.:]*<\/ip>/d' \
+	-e 's|^ *<text xml:space="preserve" bytes="0" \/>||g' \
+	-e 's|^ *<text xml:space="preserve" bytes="[0-9]*">||g' \
+	-e '/^ *<username>.*<\/username>$/d' \
 	-e 's|</text>$||' \
-	-e '/^      <sha1\/>$/d' \
+	-e '/^ *<sha1>[a-z0-9]*<\/sha1>$/d' \
+	-e '/^ *<sha1\/>$/d' \
+	-e '/^ *<minor\/>$/d' \
 	-e 's|^    <title>\(.*\)<\/title>$|#+title: \1|' \
 	-e 's|^      <timestamp>\(.*\)T\(.*\)Z<\/timestamp>$|#+date: \[\1 \2\] UTC\n|' \
 	-e 's|^\*\*\*\*\*\([^\*].*\)$|        - \1|' \
@@ -35,5 +39,22 @@ do
 	-e 's|^===\([^=].*[^=]\)===$|*** \1|' \
 	-e 's|^==\([^=].*[^=]\)==$|** \1|' \
 	-e 's|^=\([^=].*[^=]\)=$|* \1|' \
+	-e 's|&lt;PRE&gt;|#+begin_src f90|g' \
+	-e 's|&lt;pre&gt;|#+begin_src f90|g' \
+	-e 's|&lt;\/PRE&gt;|#+end_src|g' \
+	-e 's|&lt;\/pre&gt;|#+end_src|g' \
 	$INFILE > $OUTFILE
 done
+echo
+
+exit
+
+	-e 's|\&lt;math\&gt;|\\\[|g' \
+	-e 's|\&lt;\/math\&gt;|\\\]|g' \
+
+#	-e 's|\&lt;|<|g' \
+#	-e 's|\&gt;|>|g' \
+
+
+	# &amp;amp; -> &
+	
