@@ -1,4 +1,4 @@
-#+title: Orgmode-convert readme
+#+title: Orgmode-convert
 
 The repository *Orgmode-convert* contains a number of (Bash or Python) scripts that I use to convert
 information from and to Emacs Orgmode format.  Note that these are rough scripts, not fancy programs, so read
