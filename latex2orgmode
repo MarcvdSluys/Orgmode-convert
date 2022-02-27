@@ -43,14 +43,19 @@ def get_arguments():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
     
     # Required arguments:
-    parser.add_argument("infile", type=str, default=None, help="name of the input file (file.tex)")
+    parser.add_argument("infile", type=str, default=None, help="name of the input LaTeX file (file.tex)")
+    parser.add_argument("-o", "--outfile", type=str, default=None, help="name of the output Orgmode file (file.org)")
     
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="increase output verbosity")  # Counts number of occurrences
     
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     
-    outfile = re.sub(r'\.org\.org',r'.org', re.sub(r'\.tex',r'.org', str(args.infile))+'.org')
+    if args.outfile is None:
+        outfile = re.sub(r'\.org\.org',r'.org', re.sub(r'\.tex',r'.org', str(args.infile))+'.org')
+    else:
+        outfile = args.outfile
+        
     if args.infile == outfile:
         sys.stderr.write('Input and output file have the same name: '+outfile+'\n')
         
@@ -104,8 +109,10 @@ def line_latex_to_orgmode(line):
       (str):  A line containing Orgmode code.
     """
     
-    line = re.sub(r'^ *\n', r'', line)  # Remove empty lines - CHECK remove this code line later!
+    # line = re.sub(r'^ *\n *\n *\n', r'\n\n', line)  # Remove series of empty lines
+    # line = re.sub(r'^ *\n', r'', line)  # Remove empty lines - CHECK remove this code line later!
     
+    # Preamble:
     line = re.sub(r'^.*\\documentclass.*\n', r'', line)
     line = re.sub(r'^.*\\usepackage.*\n', r'', line)
     line = re.sub(r'^.*\\graphicspath.*\n', r'', line)
@@ -120,42 +127,136 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\makeatother.*\n', r'', line)
     line = re.sub(r'^.*\\newcommand.*\n', r'', line)
     line = re.sub(r'^.*\\renewcommand.*\n', r'', line)
+    
+    # Title, author, etc:
+    line = re.sub(r'\\title[* ]*\{([^}]*)\}',  r'#+title:  \1', line)
+    line = re.sub(r'\\author[* ]*\{([^}]*)\}', r'#+author: \1', line)
+    line = re.sub(r'\\email[* ]*\{([^}]*)\}',  r'#+email:  \1', line)
+    line = re.sub(r'\\date[* ]*\{([^}]*)\}',   r'#+date:   \1', line)
+    
+    # Resolve aliases/macros/newcommands:
+    line = re.sub(r'^\\bel *\{([^}]*)\}', r'\n\\label{\1}\n\\begin{equation}', line)  # \bel = \begin{eq} + \label
+    
+    line = re.sub(r'^\\be$', r'\\begin{equation}', line)  # \be = \begin{eq}
+    line = re.sub(r'^\\ee$', r'\\end{equation}', line)  # \be = \begin{eq}
+    line = re.sub(r'^\\be ', r'\\begin{equation}', line)  # \be = \begin{eq}
+    line = re.sub(r'^\\ee ', r'\\end{equation}', line)  # \be = \begin{eq}
+    
+    # eqnarray is unknown to Orgmode; rename it equation:
+    line = re.sub(r'^\\bal *\{([^}]*)\}', r'\n\\label{\1}\n\\begin{equation}', line)  # \bel = \begin{eq} + \label
+    line = re.sub(r'^\\bael *\{([^}]*)\}', r'\n\\label{\1}\n\\begin{equation}', line)  # \bel = \begin{eq} + \label
+    
+    line = re.sub(r'^\\bea$', r'\\begin{equation}', line)  # \be = \begin{eqnarray}
+    line = re.sub(r'^\\eea$', r'\\end{equation}', line)  # \be = \begin{eqnarray}
+    line = re.sub(r'^\\bea ', r'\\begin{equation}', line)  # \be = \begin{eqnarray}
+    line = re.sub(r'^\\eea ', r'\\end{equation}', line)  # \be = \begin{eqnarray}
+    
+    line = re.sub(r'^\\ba$', r'\\begin{equation}', line)  # \be = \begin{eqnarray}
+    line = re.sub(r'^\\ea$', r'\\end{equation}', line)  # \be = \begin{eqnarray}
+    line = re.sub(r'^\\ba ', r'\\begin{equation}', line)  # \be = \begin{eqnarray}
+    line = re.sub(r'^\\ea ', r'\\end{equation}', line)  # \be = \begin{eqnarray}
+    
+    
+    # References to equations:
+    line = re.sub(r'([Ee]quations*)[~ ]\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'([Ee]quations*)\\,\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'([Ee]quations*)[~ ]', r'\1 ', line)
+    line = re.sub(r'([Ee]quations*)\,', r'\1 ', line)
+    
+    line = re.sub(r'([Ee]qs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'([Ee]qs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'([Ee]qs*)\.*[~ ]', r'\1.', line)
+    line = re.sub(r'([Ee]qs*)\.*\,', r'\1.', line)
+    
+    # References to figures:
+    line = re.sub(r'([Ff]igures*)[~ ]\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'([Ff]igures*)\\,\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'([Ff]igures*)[~ ]', r'\1 ', line)
+    line = re.sub(r'([Ff]igures*)\,', r'\1 ', line)
+    
+    line = re.sub(r'([Ff]igs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'([Ff]igs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'([Ff]igs*)\.*[~ ]', r'\1.', line)
+    line = re.sub(r'([Ff]igs*)\.*\,', r'\1.', line)
+    
+    # References to tables:
+    line = re.sub(r'([Tt]ables*)[~ ]\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'([Tt]ables*)\\,\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'([Tt]ables*)[~ ]', r'\1 ', line)
+    line = re.sub(r'([Tt]ables*)\,', r'\1 ', line)
+    
+    line = re.sub(r'([Tt]abs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'([Tt]abs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'([Tt]abs*)\.*[~ ]', r'\1.', line)
+    line = re.sub(r'([Tt]abs*)\.*\,', r'\1.', line)
+    
+    # Spaces:
+    line = re.sub(r'\~', r' ', line)
+    line = re.sub(r'\\,', r' ', line)
+    
+    # Cetera:
+    line = re.sub(r'^.*\\maketitle.*\n', r'', line)
     line = re.sub(r'^.*\\setcounter.*\n', r'', line)
     line = re.sub(r'^.*\\setlength.*\n', r'', line)
     line = re.sub(r'^.*\\raggedright.*\n', r'', line)
     line = re.sub(r'\\vfill', r'', line)
     
+    line = re.sub(r'\} *\\label *\{([^}]*)\}', r'}\n\\label{\1}', line)  # Move trailing \label{} to its own line
+    
+    
+    # Begin/end stuff:
     line = re.sub(r'^.*\\begin\{document\}.*\n', r'', line)
     line = re.sub(r'^.*\\end\{document\}.*\n', r'', line)
     line = re.sub(r'^.*\\begin\{multicols.*\n', r'', line)
     line = re.sub(r'^.*\\end\{multicols.*\n', r'', line)
     line = re.sub(r'\\columnbreak', r'', line)
     
+    # Font size:
     line = re.sub(r'\\normalsize', r'', line)
     line = re.sub(r'\\footnotesize', r'', line)
     line = re.sub(r'\\scriptsize', r'', line)
+    
     # line = re.sub(r'\\newline', r'\n', line)  # '\n' will not match $ later
     line = re.sub(r'\\newline', r'', line)
     line = re.sub(r'^.*\\newtheorem\{.*\n', r'', line)
     
-    line = re.sub(r'\\chapter[* ]*\{(.*)\}', r'\n* \1', line)
-    line = re.sub(r'\\section[* ]*\{(.*)\}', r'\n* \1', line)
-    line = re.sub(r'\\subsection[* ]*\{(.*)\}', r'\n** \1', line)
-    line = re.sub(r'\\subsubsection[* ]*\{(.*)\}', r'\n*** \1', line)
-    line = re.sub(r'\\paragraph[* ]*\{(.*)\}', r'\n**** \1', line)
+    # Chapters, sections and paragraphs:
+    line = re.sub(r'\\chapter[* ]*\{([^}]*)\}', r'\n* \1', line)
+    line = re.sub(r'\\section[* ]*\{([^}]*)\}', r'\n* \1', line)
+    line = re.sub(r'\\subsection[* ]*\{([^}]*)\}', r'\n** \1', line)
+    line = re.sub(r'\\subsubsection[* ]*\{([^}]*)\}', r'\n*** \1', line)
+    line = re.sub(r'\\paragraph[* ]*\{([^}]*)\}', r'\n**** \1', line)
     
-    line = re.sub(r'^ *\\textbf[* ]*\{(.*)\} *$', r'\n**** \1', line)  # full-line \textbf appears to be used as a paragraph
+    line = re.sub(r'^ *\\textbf[* ]*\{([^}]*)\} *$', r'\n**** \1', line)  # full-line \textbf appears to be used as a paragraph
     
-    line = re.sub(r'\\textbf[* ]*\{(.*)\}', r'*\1*', line)
-    line = re.sub(r'\\textit[* ]*\{(.*)\}', r'/\1/', line)
-    line = re.sub(r'\\emph[* ]*\{(.*)\}', r'/\1/', line)
+    # Labels and references:
+    line = re.sub(r'\\label[* ]*\{([^}]*)\}', r'label:\1', line)
+    line = re.sub(r'\\ref[* ]*\{([^}]*)\}', r'ref:\1', line)
     
+    # Citations:
+    line = re.sub(r'\\cite[pt]*[* ]*\{([^}]*)\}', r'[[cite:&\1]]', line)
+    
+    line = re.sub(r'\\url[* ]*\{([^}]*)\}', r' \1 ', line)
+    
+    # Bold and italics:
+    line = re.sub(r'\\textbf[* ]*\{([^}]*)\}', r'*\1*', line)
+    line = re.sub(r'\\textit[* ]*\{([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\\emph[* ]*\{([^}]*)\}', r'/\1/', line)
+    
+    # Spaces in inline equations:
     line = re.sub(r'^([^\$]*\$) ', r'\1', line)  # Remove space after first $ in line
     line = re.sub(r' (\$[^$]*$)', r'\1', line)   # Remove space before last $ in line
     
+    # Inline -> full equations:
     line = re.sub(r'^ *\$([^$]*)\$ *$', r'\[ \1 \]\n', line)  # Replace whole-line $...$ with \[...\]
     line = re.sub(r' +\$ +([^$]+) +\$ +', r'$ \1 $', line)  # Replace leftover " $ text $ " text $"
     
+    # Symbols:
+    line = re.sub(r'\\&', r'&', line)
+    
+    # Fix equations:
+    line = re.sub(r'\\int *\\int *\\int', r'\\iiint', line)  # Need amsmath
+    line = re.sub(r'\\int *\\int', r'\\iint', line)  # Need amsmath
     
     # line = re.sub(r'^.*\\.*\n', r'', line)
     # line = re.sub(r'', r'', line)
