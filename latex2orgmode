@@ -67,7 +67,7 @@ def get_arguments():
 
 def file_latex_to_orgmode(infile, outfile):
     """Covert lines of text from LaTeX format to Orgmode format.
-
+    
     Parameters:
       infile (str):   Name of the input file.
       outfile (str):  Name of the output file.
@@ -127,6 +127,9 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\makeatother.*\n', r'', line)
     line = re.sub(r'^.*\\newcommand.*\n', r'', line)
     line = re.sub(r'^.*\\renewcommand.*\n', r'', line)
+    line = re.sub(r'^.*\\bibliography.*\n', r'', line)
+    line = re.sub(r'^.*\\DeclareRobustCommand.*\n', r'', line)
+    line = re.sub(r'^.*\\tableofcontents.*\n', r'', line)
     
     # Title, author, etc:
     line = re.sub(r'\\title[* ]*\{([^}]*)\}',  r'#+title:  \1', line)
@@ -207,14 +210,49 @@ def line_latex_to_orgmode(line):
     # Begin/end stuff:
     line = re.sub(r'^.*\\begin\{document\}.*\n', r'', line)
     line = re.sub(r'^.*\\end\{document\}.*\n', r'', line)
+    
+    # Figures:
+    line = re.sub(r'^.*\\begin\{figure.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{figure.*\n', r'', line)
+    line = re.sub(r'\\pgfimage\[[^]]*\]\{([^}]*)\}', r'[[file:\1]]', line)
+    
+    # Tables:
+    line = re.sub(r'^.*\\begin\{table.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{table.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{tabular.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{tabular.*\n', r'', line)
     line = re.sub(r'^.*\\begin\{multicols.*\n', r'', line)
     line = re.sub(r'^.*\\end\{multicols.*\n', r'', line)
     line = re.sub(r'\\columnbreak', r'', line)
     
+    line = re.sub(r'\\centering', r'', line)
+    line = re.sub(r'\\caption\{', r'Caption: ', line)
+    
+    # Lists:
+    line = re.sub(r'^.*\\begin\{itemize.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{itemize.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{enumerate.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{enumerate.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{description.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{description.*\n', r'', line)
+    line = re.sub(r'\\item\[([^]])\] *', r'+ \1 :: ', line)
+    line = re.sub(r'\\item *', r'+ ', line)
+    
+    # Appendices:
+    line = re.sub(r'^.*\\begin\{appendices.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{appendices.*\n', r'', line)
+    line = re.sub(r'\\appendix', r'', line)
+    
     # Font size:
-    line = re.sub(r'\\normalsize', r'', line)
+    line = re.sub(r'\\tiny', r'', line)
     line = re.sub(r'\\footnotesize', r'', line)
-    line = re.sub(r'\\scriptsize', r'', line)
+    line = re.sub(r'\\small', r'', line)
+    line = re.sub(r'\\normalsize', r'', line)
+    line = re.sub(r'\\large', r'', line)
+    line = re.sub(r'\\Large', r'', line)
+    line = re.sub(r'\\LARGE', r'', line)
+    line = re.sub(r'\\huge', r'', line)
+    line = re.sub(r'\\Huge', r'', line)
     
     # line = re.sub(r'\\newline', r'\n', line)  # '\n' will not match $ later
     line = re.sub(r'\\newline', r'', line)
@@ -236,6 +274,7 @@ def line_latex_to_orgmode(line):
     # Citations:
     line = re.sub(r'\\cite[pt]*[* ]*\{([^}]*)\}', r'[[cite:&\1]]', line)
     
+    # URL:
     line = re.sub(r'\\url[* ]*\{([^}]*)\}', r' \1 ', line)
     
     # Bold and italics:
@@ -252,14 +291,26 @@ def line_latex_to_orgmode(line):
     line = re.sub(r' +\$ +([^$]+) +\$ +', r'$ \1 $', line)  # Replace leftover " $ text $ " text $"
     
     # Symbols:
+    line = re.sub(r' & ', r' | ', line)  # Tabular - CHECK - does this screw up eqnarrays?
+    line = re.sub(r'\\\\', r' ', line)   # Tabular or eqnarray
     line = re.sub(r'\\&', r'&', line)
+    line = re.sub(r'\\ldots\\*', r'...', line)
+    line = re.sub(r'\\LaTeX\\*', r'LaTeX', line)
+    line = re.sub(r'\\BibTeX\\*', r'BibTeX', line)
+    line = re.sub(r'\.\\ ', r'. ', line)  # Abbreviation
     
     # Fix equations:
     line = re.sub(r'\\int *\\int *\\int', r'\\iiint', line)  # Need amsmath
     line = re.sub(r'\\int *\\int', r'\\iint', line)  # Need amsmath
     
+    # Footnote: ISSUE: may span multiple lines...
+    line = re.sub(r'\\footnote\{([^}]*)\}', r' [fn:1: \1]', line)  # Single-line footnote
+    line = re.sub(r'\\footnote\{', r' [fn:1: ', line)  # Left over: multi-line footnote: DiY
+    
     # line = re.sub(r'^.*\\.*\n', r'', line)
     # line = re.sub(r'', r'', line)
+    
+    # line = re.sub(r'[{}]', r'', line)  # Remove leftover braces
     
     return line
 
