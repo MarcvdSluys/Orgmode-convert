@@ -215,6 +215,9 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\begin\{figure.*\n', r'', line)
     line = re.sub(r'^.*\\end\{figure.*\n', r'', line)
     line = re.sub(r'\\pgfimage\[[^]]*\]\{([^}]*)\}', r'[[file:\1]]', line)
+    line = re.sub(r'\\pgfimage\{([^}]*)\}', r'[[file:\1]]', line)
+    line = re.sub(r'\\includegraphics\[[^]]*\]\{([^}]*)\}', r'[[file:\1]]', line)
+    line = re.sub(r'\\includegraphics\{([^}]*)\}', r'[[file:\1]]', line)
     
     # Tables:
     line = re.sub(r'^.*\\begin\{table.*\n', r'', line)
