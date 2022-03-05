@@ -241,6 +241,10 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'\\item\[([^]]*)\] *', r'+ \1 :: ', line)
     line = re.sub(r'\\item *', r'+ ', line)
     
+    # Verbatim:
+    line = re.sub(r'^.*\\begin\{verbatim.*\n', r'#+begin_src text\n', line)
+    line = re.sub(r'^.*\\end\{verbatim.*\n', r'#+end_src text\n', line)
+    
     # Appendices:
     line = re.sub(r'^.*\\begin\{appendices.*\n', r'', line)
     line = re.sub(r'^.*\\end\{appendices.*\n', r'', line)
@@ -259,6 +263,8 @@ def line_latex_to_orgmode(line):
     
     # line = re.sub(r'\\newline', r'\n', line)  # '\n' will not match $ later
     line = re.sub(r'\\newline', r'', line)
+    line = re.sub(r'\\pagebreak', r'', line)
+    line = re.sub(r'\\newpage', r'', line)
     line = re.sub(r'^.*\\newtheorem\{.*\n', r'', line)
     
     # Chapters, sections and paragraphs:
