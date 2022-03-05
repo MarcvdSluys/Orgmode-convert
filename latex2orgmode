@@ -161,37 +161,37 @@ def line_latex_to_orgmode(line):
     
     
     # References to equations:
-    line = re.sub(r'([Ee]quations*)[~ ]\(([^)]*)\)', r'\1 \2', line)
-    line = re.sub(r'([Ee]quations*)\\,\(([^)]*)\)', r'\1 \2', line)
-    line = re.sub(r'([Ee]quations*)[~ ]', r'\1 ', line)
-    line = re.sub(r'([Ee]quations*)\,', r'\1 ', line)
+    line = re.sub(r'( [Ee]quations*)[~ ]\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'( [Ee]quations*)\\,\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'( [Ee]quations*)[~ ]', r'\1 ', line)
+    line = re.sub(r'( [Ee]quations*)\,', r'\1 ', line)
     
-    line = re.sub(r'([Ee]qs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
-    line = re.sub(r'([Ee]qs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
-    line = re.sub(r'([Ee]qs*)\.*[~ ]', r'\1.', line)
-    line = re.sub(r'([Ee]qs*)\.*\,', r'\1.', line)
+    line = re.sub(r'( [Ee]qs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'( [Ee]qs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'( [Ee]qs*)\.*[~ ]', r'\1.', line)
+    line = re.sub(r'( [Ee]qs*)\.*\,', r'\1.', line)
     
     # References to figures:
-    line = re.sub(r'([Ff]igures*)[~ ]\(([^)]*)\)', r'\1 \2', line)
-    line = re.sub(r'([Ff]igures*)\\,\(([^)]*)\)', r'\1 \2', line)
-    line = re.sub(r'([Ff]igures*)[~ ]', r'\1 ', line)
-    line = re.sub(r'([Ff]igures*)\,', r'\1 ', line)
+    line = re.sub(r'( [Ff]igures*)[~ ]\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'( [Ff]igures*)\\,\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'( [Ff]igures*)[~ ]', r'\1 ', line)
+    line = re.sub(r'( [Ff]igures*)\,', r'\1 ', line)
     
-    line = re.sub(r'([Ff]igs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
-    line = re.sub(r'([Ff]igs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
-    line = re.sub(r'([Ff]igs*)\.*[~ ]', r'\1.', line)
-    line = re.sub(r'([Ff]igs*)\.*\,', r'\1.', line)
+    line = re.sub(r'( [Ff]igs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'( [Ff]igs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'( [Ff]igs*)\.*[~ ]', r'\1.', line)
+    line = re.sub(r'( [Ff]igs*)\.*\,', r'\1.', line)
     
     # References to tables:
-    line = re.sub(r'([Tt]ables*)[~ ]\(([^)]*)\)', r'\1 \2', line)
-    line = re.sub(r'([Tt]ables*)\\,\(([^)]*)\)', r'\1 \2', line)
-    line = re.sub(r'([Tt]ables*)[~ ]', r'\1 ', line)
-    line = re.sub(r'([Tt]ables*)\,', r'\1 ', line)
+    line = re.sub(r'( [Tt]ables*)[~ ]\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'( [Tt]ables*)\\,\(([^)]*)\)', r'\1 \2', line)
+    line = re.sub(r'( [Tt]ables*)[~ ]', r'\1 ', line)
+    line = re.sub(r'( [Tt]ables*)\,', r'\1 ', line)
     
-    line = re.sub(r'([Tt]abs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
-    line = re.sub(r'([Tt]abs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
-    line = re.sub(r'([Tt]abs*)\.*[~ ]', r'\1.', line)
-    line = re.sub(r'([Tt]abs*)\.*\,', r'\1.', line)
+    line = re.sub(r'( [Tt]abs*)\.*[~ ]\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'( [Tt]abs*)\.*\\,\(([^)]*)\)', r'\1.\2', line)
+    line = re.sub(r'( [Tt]abs*)\.*[~ ]', r'\1.', line)
+    line = re.sub(r'( [Tt]abs*)\.*\,', r'\1.', line)
     
     # Spaces:
     line = re.sub(r'\~', r' ', line)
@@ -238,7 +238,7 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\end\{enumerate.*\n', r'', line)
     line = re.sub(r'^.*\\begin\{description.*\n', r'', line)
     line = re.sub(r'^.*\\end\{description.*\n', r'', line)
-    line = re.sub(r'\\item\[([^]])\] *', r'+ \1 :: ', line)
+    line = re.sub(r'\\item\[([^]]*)\] *', r'+ \1 :: ', line)
     line = re.sub(r'\\item *', r'+ ', line)
     
     # Appendices:
@@ -284,6 +284,9 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'\\textbf[* ]*\{([^}]*)\}', r'*\1*', line)
     line = re.sub(r'\\textit[* ]*\{([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\\emph[* ]*\{([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\{\\bf *([^}]*)\}', r'*\1*', line)
+    line = re.sub(r'\{\\it *([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\{\\em *([^}]*)\}', r'/\1/', line)
     
     # Spaces in inline equations:
     line = re.sub(r'^([^\$]*\$) ', r'\1', line)  # Remove space after first $ in line
