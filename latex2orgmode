@@ -201,7 +201,10 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\maketitle.*\n', r'', line)
     line = re.sub(r'^.*\\setcounter.*\n', r'', line)
     line = re.sub(r'^.*\\setlength.*\n', r'', line)
+    line = re.sub(r'^.*\\newlength.*\n', r'', line)
+    line = re.sub(r'^.*\\raggedleft.*\n', r'', line)
     line = re.sub(r'^.*\\raggedright.*\n', r'', line)
+    line = re.sub(r'^.*\\vspace.*\n', r'\n\n', line)
     line = re.sub(r'\\vfill', r'', line)
     
     line = re.sub(r'\} *\\label *\{([^}]*)\}', r'}\n\\label{\1}', line)  # Move trailing \label{} to its own line
