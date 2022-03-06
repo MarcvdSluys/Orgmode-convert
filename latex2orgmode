@@ -288,6 +288,7 @@ def line_latex_to_orgmode(line):
     
     # URL:
     line = re.sub(r'\\url[* ]*\{([^}]*)\}', r' \1 ', line)
+    line = re.sub(r'\\href[* ]*\{([^}]*)\}\{([^}]*)\}', r' \2 (\1) ', line)
     
     # Bold and italics:
     line = re.sub(r'\\textbf[* ]*\{([^}]*)\}', r'*\1*', line)
