@@ -123,6 +123,19 @@ sed -i \
     -e 's: *&lt;\/*td&gt; *: | :g' \
     -e 's: *&lt;\/*tr&gt; *::g' \
     $OUTFILE
+# Same with <...>:
+sed -i \
+    -e 's:^ *<\/*table> *$:|------|:' \
+    -e 's:^ *<table .*> *$:|------|:' \
+    -e 's:<table>:|------|\n:g' \
+    -e 's:<\/table>:\n|------|:g' \
+    -e 's: *<tr> *<td> *:| :g' \
+    -e 's: *<td> *</td> *: | :g' \
+    -e 's: *<\/td> *<\/tr> *: |:g' \
+    -e 's: *<\/td> *<td> *: | :g' \
+    -e 's: *<\/*td> *: | :g' \
+    -e 's: *<\/*tr> *::g' \
+    $OUTFILE
 #     -e 's:::g' \
 #     -e 's: *&lt;tr align=&quot;center&quot;&gt; *&lt;td&gt; *:| :g' \
 #     -e 's: *&lt;tr align=&quot;center&quot;&gt; *&lt;td colspan=&quot;[0-9]*&quot;&gt; *:| :g' \
@@ -135,6 +148,15 @@ sed -i \
     -e 's|&lt;\/sub&gt;||g' \
     -e 's|&lt;sup&gt;|^|g' \
     -e 's|&lt;\/sup&gt;||g' \
+    $OUTFILE
+# Same with <...>:
+sed -i \
+    -e 's|CO<sub>2</sub>|CO_2|g' \
+    -e 's|<sup>2</sup>|^2|g' \
+    -e 's|<sub>|_|g' \
+    -e 's|<\/sub>||g' \
+    -e 's|<sup>|^|g' \
+    -e 's|<\/sup>||g' \
     $OUTFILE
 #     -e 's|||g' \
 
@@ -152,9 +174,23 @@ sed -i \
     -e 's|&lt;br&gt;||' \
     -e '/^&lt;div class=&quot;noautonum&quot;&gt;__TOC__&lt;\/div&gt;$/d' \
     $OUTFILE
-#     -e 's|&lt;TAG&gt;||g' \
-#     -e 's|&lt;\/TAG&gt;||g' \
-#     -e 's|&lt;\/*TAG&gt;||g' \
+# Same with <...>:
+sed -i \
+    -e 's|<PRE>|#+begin_src f90|g' \
+    -e 's|<pre>|#+begin_src f90|g' \
+    -e 's|<\/PRE>|#+end_src|g' \
+    -e 's|<\/pre>|#+end_src|g' \
+    -e 's|<\/*small>||g' \
+    -e 's|<math>|\\\[|g' \
+    -e 's|<\/math>|\\\]|g' \
+    -e 's|<b> *|\*|g' \
+    -e 's| *<\/b>|\*|g' \
+    -e 's|<br>||' \
+    -e '/^<div class=&quot;noautonum&quot;>__TOC__<\/div>$/d' \
+    $OUTFILE
+#     -e 's|<TAG>||g' \
+#     -e 's|<\/TAG>||g' \
+#     -e 's|<\/*TAG>||g' \
 
 # Convert bold, italic:
 sed -i \
@@ -237,6 +273,19 @@ sed -i \
     -e "s|&lt;-&gt;|<->|g" \
     -e "s|&lt;\(--*\)&gt;|<\1>|g" \
     $OUTFILE
+# Same with <...>:
+sed -i \
+    -e "s| <- | <- |g" \
+    -e "s| <\(--*\)| <\1|g" \
+    -e "s|^<- |<- |g" \
+    -e "s|^<\(--*\)|<\1|g" \
+    -e "s| -> | -> |g" \
+    -e "s|\(--*\)> |\1> |g" \
+    -e "s| ->$| ->|g" \
+    -e "s|\(--*\)>$|\1>|g" \
+    -e "s|<->|<->|g" \
+    -e "s|<\(--*\)>|<\1>|g" \
+    $OUTFILE
 
 # Convert HTML &lt;/&gt; 'double arrows':
 sed -i \
@@ -250,6 +299,19 @@ sed -i \
     -e "s|==*&gt;$|==>|g" \
     -e "s|&lt;=&gt;|<=>|g" \
     -e "s|&lt;==*&gt;|<===>|g" \
+    $OUTFILE
+# Same with <...>:
+sed -i \
+    -e "s| <= | <= |g" \
+    -e "s| <==*| <==|g" \
+    -e "s|^<= |<= |g" \
+    -e "s|^<==*|<==|g" \
+    -e "s| => | => |g" \
+    -e "s|==*> |==> |g" \
+    -e "s| =>$| =>|g" \
+    -e "s|==*>$|==>|g" \
+    -e "s|<=>|<=>|g" \
+    -e "s|<==*>|<===>|g" \
     $OUTFILE
 
 
@@ -313,6 +375,14 @@ sed -i \
     -e 's|0&lt;\$\beta\$|0<$\beta$|g' \
     -e 's|||g' \
     $OUTFILE
+# Same with <...>:
+sed -i \
+    -e 's|Mo<M|Mo<M|g' \
+    -e 's|R>R|R>R|g' \
+    -e 's|d<P|d<P|g' \
+    -e 's|0<\$\beta\$|0<$\beta$|g' \
+    -e 's|||g' \
+    $OUTFILE
 #     -e 's|||g' \
     
 # Convert common &amp; constructs:
@@ -337,7 +407,20 @@ sed -i \
     -e "s|~&lt;|<~|g" \
     -e "s|~&gt;|>~|g" \
     $OUTFILE
+# Same with <...>:
+sed -i \
+    -e "s|<\([0-9]\)|<\1|g" \
+    -e "s|>\([0-9]\)|>\1|g" \
+    -e "s|<=|<=|g" \
+    -e "s|>=|>=|g" \
+    -e "s|<~|<~|g" \
+    -e "s|>~|>~|g" \
+    -e "s|~<|<~|g" \
+    -e "s|~>|>~|g" \
+    $OUTFILE
 
+
+# Leftover &lt;/&gt;:
 # Convert HTML &lt; &gt; brackets:
 sed -i \
     -e "s:&lt;\([^&]*|[^&]*\)&gt;:<\1>:g" \
@@ -366,6 +449,25 @@ sed -i \
     -e "s|&amp;|\&|g" \
     $OUTFILE
 
+# ":<math>" seems to occur on Wikipedia - remove colon:
+sed -i \
+    -e 's|:\\\[|\\\[|g' \
+    $OUTFILE
+
+# Remove internal links:
+sed -i \
+    -e 's:\[\[[^]^|]*|\([^]]*\)\]\]:\1:g' \
+    -e 's:\[\[\([^]]*\)\]\]:\1:g' \
+    $OUTFILE
+
+# Turn references into footnotes:
+sed -i \
+    -e 's|<ref name=\([^>]*\)>|\[fn:\1: |g' \
+    -e 's|<ref>|\[fn:: |g' \
+    -e 's|<\/ref>|\]|g' \
+    -e 's|{{||g' \
+    -e 's|}}||g' \
+    $OUTFILE
 
 # Convert http(s) links:
 sed -i \
