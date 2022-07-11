@@ -1,22 +1,12 @@
 #+title: Orgmode-convert
 
-The repository *Orgmode-convert* contains a number of (Bash or Python) scripts that I use to convert
-information from and to Emacs Orgmode format.  Note that these are rough scripts, not fancy programs, so read
-and check them before use.  Also, don't expect a full conversion, but be prepared to so some manual hard
-labour after running a script.  The number of files I have tested these scripts on may be very limited!
+The repository *Orgmode-convert* contains a number of (Bash or Python) scripts that I use to convert information
+to Emacs Orgmode format (hardly from Orgmode, given the excellent export options).  Note that these are rough
+scripts, not fancy programs, so read and check them before use.  Also, don't expect a full conversion, but be
+prepared to so some manual hard labour after running a script.  The number of files I have tested these
+scripts on may be very limited!
 
 Additions and improvements in the form of pull requests (or issues) are welcome!
-
-* Mediawiki2Orgmode
-A Python script to convert content from a Mediawiki (like Wikipedia) page to Emacs Orgmode.  I used to keep my
-notes in a Mediawiki running on a local Apache server on my laptop, but all that seemed overkill when I
-discovered Orgmode.  I exported my whole wiki to ~.xml~ files and used this script to do the bulk of the
-conversion to Orgmode.  In addition, I see no reason why the content of a wiki, copied into e.g. a ~.mw~ file,
-could not be converted as well.  Note that ~Attic/mediawiki2orgmode.sh~ contains the original Bash version,
-which may be similar but will no longer be developed.
-
-* LaTeX2Orgmode
-A Python script to strip unusable LaTeX commands and convert content to Orgmode format.
 
 * HTML2Orgmode
 A Python script to strip unusable HTML code and convert content to Orgmode format.  I have focused on the
@@ -26,4 +16,16 @@ Hence, to download an HTML file for conversion:
 2. Click on the *Toggle reader view* button at the right of the address bar, press ~Ctrl-Alt-R~ or choose ~View >
    Enter Reader View~ in the menu to activate the *Reader view*;
 3. Press ~Ctrl-S~ or choose ~File > Save as~ in the menu and save the page (complete, or HTML only).
+
+* LaTeX2Orgmode
+A Python script to strip unusable LaTeX commands and convert content to Orgmode format.
+
+* Mediawiki2Orgmode
+A Python script to convert content from a Mediawiki (like Wikipedia) page to Emacs Orgmode.  I used to keep my
+notes in a Mediawiki running on a local Apache server on my laptop, but all that seemed overkill when I
+discovered Orgmode.  I exported my whole wiki to ~.xml~ files and used this script to do the bulk of the
+conversion to Orgmode.  In addition, I see no reason why the content of a wiki, copied into e.g. a ~.mw~ file,
+could not be converted as well.  Note that ~Attic/mediawiki2orgmode.sh~ contains the original Bash version,
+which may be similar but will no longer be developed.
+
 
