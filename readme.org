@@ -5,14 +5,15 @@ information from and to Emacs Orgmode format.  Note that these are rough scripts
 and check them before use.  Also, don't expect a full conversion, but be prepared to so some manual hard
 labour after running a script.
 
-Additions and improvements are welcome!
+Additions and improvements in the form of pull requests (or issues) are welcome!
 
 * Mediawiki2Orgmode
-A Bash script to convert content from a Mediawiki (like Wikipedia) page to Emacs Orgmode.  I used to keep my
+A Python script to convert content from a Mediawiki (like Wikipedia) page to Emacs Orgmode.  I used to keep my
 notes in a Mediawiki running on a local Apache server on my laptop, but all that seemed overkill when I
 discovered Orgmode.  I exported my whole wiki to ~.xml~ files and used this script to do the bulk of the
 conversion to Orgmode.  In addition, I see no reason why the content of a wiki, copied into e.g. a ~.mw~ file,
-could not be converted as well.
+could not be converted as well.  Note that ~mediawiki2orgmode.sh~ contains the original Bash version, which may
+be similar but will no longer be developed.
 
 * LaTeX2Orgmode
 A Python script to strip unusable LaTeX commands and convert content to Orgmode format.

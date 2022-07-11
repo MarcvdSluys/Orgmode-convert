@@ -1,0 +1,499 @@
+#!/bin/env python
+# -*- coding: utf-8 -*-
+
+""" mediawiki2orgmode:  Try to convert Mediawiki to Orgmode.
+    2022-02-23, MvdS: initial version.
+"""
+
+# PYTHON_ARGCOMPLETE_OK
+
+
+import colored_traceback
+colored_traceback.add_hook()
+
+import re
+
+
+
+def main():
+    """Main function."""
+    
+    infile,outfile,verbosity = get_arguments()
+    file_mediawiki_to_orgmode(infile, outfile, verbosity)
+    
+    exit(0)
+
+
+def get_arguments():
+    """Get CLI arguments.
+    
+    Parameters:
+    
+    Returns:
+      (str):  Input file name.
+      (str):  Output file name.
+    """
+    
+    import argparse
+    import argcomplete
+    import sys
+    
+    # Parse command-line arguments:
+    parser = argparse.ArgumentParser(description="Try to convert a Mediawiki file to Orgmode.",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
+    
+    # Required arguments:
+    parser.add_argument("infile",            type=str, default=None, help="name of the input Mediawiki file (file.xml/.mw/.mediawiki)")
+    parser.add_argument("-o", "--outfile",   type=str, default=None, help="name of the output Orgmode file (file.org)")
+    
+    parser.add_argument("-v", "--verbosity", action="count", default=1, help="increase output verbosity")  # Counts number of occurrences
+    parser.add_argument("-q", "--quiet",     action="store_true", help="suppress output")  # Default = False
+    
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+    
+    if args.outfile is None:
+        outfile = str(args.infile)
+        outfile = re.sub(r'\.xml', r'.org', outfile)        # Replace extension .xml with .org
+        outfile = re.sub(r'\.mw', r'.org', outfile)         # Replace extension .mw with .org
+        outfile = re.sub(r'\.mediawiki', r'.org', outfile)  # Replace extension .mediawiki with .org
+        
+        outfile = outfile+'.org'                            # In case nothing happened above, append .org
+        outfile = re.sub(r'\.org\.org', r'.org', outfile)   # In case we have a double extension, remove one
+    else:
+        outfile = args.outfile
+        
+    if args.infile == outfile:
+        sys.stderr.write('Input and output file have the same name: '+outfile+'\n')
+    
+    verbosity = args.verbosity
+    if args.quiet: verbosity=0  # No output
+    
+    if verbosity>0:
+        print('Input file:  '+args.infile)
+        print('Output file: '+outfile)
+        # print('Verbosity:   '+str(verbosity))
+    
+    return args.infile, outfile, verbosity
+
+
+def file_mediawiki_to_orgmode(infile, outfile,verbosity):
+    """Covert lines of text from Mediawiki format to Orgmode format.
+    
+    Parameters:
+      infile (str):     Name of the input file.
+      outfile (str):    Name of the output file.
+      verbosity (int):  Verbosity level (0=quiet).
+    """
+    
+    # Open the input and output files:
+    ofl = open(outfile,'w')
+    # ofl.write('# #+startup: latexpreview  # Note: this may take a looong time when uncommented...\n')
+    
+    iline = 0
+    with open(infile, 'r') as lines:
+        try:
+            while True:
+                iline += 1
+        
+                # Read data line and extract column contents:
+                # line = ifl.readline()
+                line = next(lines)
+                
+                line = line_mediawiki_to_orgmode(line)
+                # line = line_latex_to_orgmode(line)
+                
+                ofl.write('%s' % (line))
+                # print(iline, line)
+        except StopIteration:
+            if verbosity>0: print(str(iline)+' lines processed.')
+            exit
+    
+    return
+
+
+def line_mediawiki_to_orgmode(line):
+    """Convert a line of Mediawiki code to Orgmode.
+
+    Parameters:  
+      line (str):  The line containing Mediawiki code.
+
+    Returns:  
+      (str):  A line containing Orgmode code.
+    """
+    
+    # Remove xml <tags> from Mediawiki export:
+    line = re.sub(r'^  <\/*page>\n$', r'', line)
+    line = re.sub(r'^    <ns>0<\/ns>\n$', r'', line)
+    line = re.sub(r'^ *<id>[0-9]*<\/id>\n$', r'', line)
+    line = re.sub(r'^    <\/*revision>\n$', r'', line)
+    line = re.sub(r'^      <parentid>[0-9]*<\/parentid>\n$', r'', line)
+    line = re.sub(r'^      <\/*contributor>\n$', r'', line)
+    line = re.sub(r'^      <model>wikitext<\/model>\n$', r'', line)
+    line = re.sub(r'^      <format>text\/x-wiki<\/format>\n$', r'', line)
+    line = re.sub(r'^      <comment>.*<\/comment>', r'', line)
+    line = re.sub(r'^ *<ip>[0-9\.:]*<\/ip>', r'', line)
+    line = re.sub(r'^ *<text xml:space="preserve" bytes="0" \/>', r'', line)
+    line = re.sub(r'^ *<text xml:space="preserve" bytes="[0-9]*">', r'', line)
+    line = re.sub(r'^ *<username>.*<\/username>\n$', r'', line)
+    line = re.sub(r'</text>$', r'', line)
+    line = re.sub(r'^ *<sha1>[a-z0-9]*<\/sha1>\n$', r'', line)
+    line = re.sub(r'^ *<sha1\/>\n$', r'', line)
+    line = re.sub(r'^ *<minor\/>\n$', r'', line)
+    line = re.sub(r'^    <title>(.*)<\/title>$', r'#+title: \1', line)
+    line = re.sub(r'^      <timestamp>(.*)T(.*)Z<\/timestamp>$', r'#+date: [\1 \2] UTC\n', line)
+    
+    line = re.sub(r'^----\n$', r'', line)  # End of header(?)
+    
+    # Convert space, dash:
+    line = re.sub(r'&amp;nbsp;',    r' ', line)
+    line = re.sub(r' &amp;mdash; ', r' - ', line)
+    line = re.sub(r'&amp;mdash;',   r' - ', line)
+    line = re.sub(r'&amp;ndash;',   r'-', line)
+    
+    # Convert bullets, enumerates and section headings:
+    line = re.sub(r'^\*\*\*\*\*([^\*].*)$', r'        - \1', line)
+    line = re.sub(r'^\*\*\*\*([^\*].*)$', r'      * \1', line)
+    line = re.sub(r'^\*\*\*([^\*].*)$', r'    - \1', line)
+    line = re.sub(r'^\*\*([^\*].*)$', r'  - \1', line)
+    line = re.sub(r'^\*([^\*].*)$', r'+ \1', line)
+    line = re.sub(r'^##### ', r'            1. ', line)
+    line = re.sub(r'^#### ', r'         1. ', line)
+    line = re.sub(r'^### ', r'      1. ', line)
+    line = re.sub(r'^## ', r'   1. ', line)
+    line = re.sub(r'^# ', r'1) ', line)
+    line = re.sub(r'^=====([^=].*[^=])=====$', r'***** \1', line)
+    line = re.sub(r'^====([^=].*[^=])====$', r'**** \1', line)
+    line = re.sub(r'^===([^=].*[^=])===$', r'*** \1', line)
+    line = re.sub(r'^==([^=].*[^=])==$', r'** \1', line)
+    line = re.sub(r'^=([^=].*[^=])=$', r'* \1', line)
+    
+    # Convert HTML tables:
+    line = re.sub(r' *width=&quot;[0-9]*%&quot; *', r'', line)
+    line = re.sub(r' *colspan=&quot;[0-9]*&quot; *', r'', line)
+    line = re.sub(r' *align=&quot;center&quot; *', r'', line)
+    line = re.sub(r' *align=&quot;left&quot; *', r'', line)
+    line = re.sub(r' *align=&quot;right&quot; *', r'', line)
+    line = re.sub(r'^ *&lt;\/*table&gt; *$', r'|------|', line)
+    line = re.sub(r'^ *&lt;table .*&gt; *$', r'|------|', line)
+    line = re.sub(r'&lt;table&gt;', r'|------|\n', line)
+    line = re.sub(r'&lt;\/table&gt;', r'\n|------|', line)
+    line = re.sub(r' *&lt;tr&gt; *&lt;td&gt; *', r'| ', line)
+    line = re.sub(r' *&lt;td&gt; *&lt;/td&gt; *', r' | ', line)
+    line = re.sub(r' *&lt;\/td&gt; *&lt;\/tr&gt; *', r' |', line)
+    line = re.sub(r' *&lt;\/td&gt; *&lt;td&gt; *', r' | ', line)
+    line = re.sub(r' *&lt;\/*td&gt; *', r' | ', line)
+    line = re.sub(r' *&lt;\/*tr&gt; *', r'', line)
+    # Same with <...>:
+    line = re.sub(r'^ *<\/*table> *$', r'|------|', line)
+    line = re.sub(r'^ *<table .*> *$', r'|------|', line)
+    line = re.sub(r'<table>', r'|------|\n', line)
+    line = re.sub(r'<\/table>', r'\n|------|', line)
+    line = re.sub(r' *<tr> *<td> *', r'| ', line)
+    line = re.sub(r' *<td> *</td> *', r' | ', line)
+    line = re.sub(r' *<\/td> *<\/tr> *', r' |', line)
+    line = re.sub(r' *<\/td> *<td> *', r' | ', line)
+    line = re.sub(r' *<\/*td> *', r' | ', line)
+    line = re.sub(r' *<\/*tr> *', r'', line)
+    
+    # line = re.sub(r'', r'', line)
+    # line = re.sub(r' *&lt;tr align=&quot;center&quot;&gt; *&lt;td&gt; *', r'| ', line)
+    # line = re.sub(r' *&lt;tr align=&quot;center&quot;&gt; *&lt;td colspan=&quot;[0-9]*&quot;&gt; *', r'| ', line)
+    
+    
+    # Convert common sup/sub constructs:
+    line = re.sub(r'CO&lt;sub&gt;2&lt;/sub&gt;', r'CO_2', line)
+    line = re.sub(r'&lt;sup&gt;2&lt;/sup&gt;', r'^2', line)
+    line = re.sub(r'&lt;sub&gt;', r'_', line)
+    line = re.sub(r'&lt;\/sub&gt;', r'', line)
+    line = re.sub(r'&lt;sup&gt;', r'^', line)
+    line = re.sub(r'&lt;\/sup&gt;', r'', line)
+    # Same with <...>:
+    line = re.sub(r'CO<sub>2</sub>', r'CO_2', line)
+    line = re.sub(r'<sup>2</sup>', r'^2', line)
+    line = re.sub(r'<sub>', r'_', line)
+    line = re.sub(r'<\/sub>', r'', line)
+    line = re.sub(r'<sup>', r'^', line)
+    line = re.sub(r'<\/sup>', r'', line)
+    # line = re.sub(r'', r'', line)
+    
+    
+    # Convert &lt;TAG&gt;...&lt;\/TAG&gt; HTML constructs:
+    line = re.sub(r'&lt;PRE&gt;', r'#+begin_src f90', line)
+    line = re.sub(r'&lt;pre&gt;', r'#+begin_src f90', line)
+    line = re.sub(r'&lt;\/PRE&gt;', r'#+end_src', line)
+    line = re.sub(r'&lt;\/pre&gt;', r'#+end_src', line)
+    line = re.sub(r'&lt;\/*small&gt;', r'', line)
+    line = re.sub(r'\&lt;math\&gt;', r'\\[', line)
+    line = re.sub(r'\&lt;\/math\&gt;', r'\\]', line)
+    line = re.sub(r'&lt;b&gt; *', r'*', line)
+    line = re.sub(r' *&lt;\/b&gt;', r'*', line)
+    line = re.sub(r'&lt;br&gt;', r'', line)
+    line = re.sub(r'^&lt;div class=&quot;noautonum&quot;&gt;__TOC__&lt;\/div&gt;\n$', r'', line)
+    # Same with <...>:
+    line = re.sub(r'<PRE>', r'#+begin_src f90', line)
+    line = re.sub(r'<pre>', r'#+begin_src f90', line)
+    line = re.sub(r'<\/PRE>', r'#+end_src', line)
+    line = re.sub(r'<\/pre>', r'#+end_src', line)
+    line = re.sub(r'<\/*small>', r'', line)
+    line = re.sub(r'<math>', r'\\[', line)
+    line = re.sub(r'<\/math>', r'\\]', line)
+    line = re.sub(r'<b> *', r'*', line)
+    line = re.sub(r' *<\/b>', r'*', line)
+    line = re.sub(r'<br>', r'', line)
+    line = re.sub(r'^<div class=&quot;noautonum&quot;>__TOC__<\/div>\n$', r'', line)
+    # line = re.sub(r'<TAG>', r'', line)
+    # line = re.sub(r'<\/TAG>', r'', line)
+    # line = re.sub(r'<\/*TAG>', r'', line)
+    
+    # Convert bold, italic:
+    line = re.sub(r"'''''([^']*)'''''", r"*/\1/*", line)
+    line = re.sub(r"'''", r"*", line)
+    line = re.sub(r"''", r"/", line)
+    
+    
+    # Convert HTML &amp; lower-case accents:
+    line = re.sub(r'&amp;auml;', r'ä', line)
+    line = re.sub(r'&amp;euml;', r'ë', line)
+    line = re.sub(r'&amp;iuml;', r'ï', line)
+    line = re.sub(r'&amp;ouml;', r'ö', line)
+    line = re.sub(r'&amp;uuml;', r'ü', line)
+    line = re.sub(r'&amp;aacute;', r'á', line)
+    line = re.sub(r'&amp;eacute;', r'é', line)
+    line = re.sub(r'&amp;iacute;', r'í', line)
+    line = re.sub(r'&amp;oacute;', r'ó', line)
+    line = re.sub(r'&amp;uacute;', r'ú', line)
+    line = re.sub(r'&amp;agrave;', r'à', line)
+    line = re.sub(r'&amp;egrave;', r'è', line)
+    line = re.sub(r'&amp;igrave;', r'ì', line)
+    line = re.sub(r'&amp;ograve;', r'ò', line)
+    line = re.sub(r'&amp;ugrave;', r'ù', line)
+    # line = re.sub(r'&amp;CODE;', r'', line)
+    
+    # HTML &amp; upper-case accents:
+    line = re.sub(r'&amp;Auml;', r'Ä', line)
+    line = re.sub(r'&amp;Euml;', r'Ë', line)
+    line = re.sub(r'&amp;Iuml;', r'Ï', line)
+    line = re.sub(r'&amp;Ouml;', r'Ö', line)
+    line = re.sub(r'&amp;Uuml;', r'Ü', line)
+    line = re.sub(r'&amp;Aacute;', r'Á', line)
+    line = re.sub(r'&amp;Eacute;', r'É', line)
+    line = re.sub(r'&amp;Iacute;', r'Í', line)
+    line = re.sub(r'&amp;Oacute;', r'Ó', line)
+    line = re.sub(r'&amp;Uacute;', r'Ú', line)
+    line = re.sub(r'&amp;Agrave;', r'À', line)
+    line = re.sub(r'&amp;Egrave;', r'È', line)
+    line = re.sub(r'&amp;Igrave;', r'Ì', line)
+    line = re.sub(r'&amp;Ograve;', r'Ò', line)
+    line = re.sub(r'&amp;Ugrave;', r'Ù', line)
+    # line = re.sub(r'&amp;CODE;', r'', line)
+    
+    # HTML &amp; symbols:
+    line = re.sub(r'&amp;deg;', r'°', line)
+    line = re.sub(r'&amp;euro;', r'€', line)
+    line = re.sub(r'&amp;amp;', r'&', line)
+    line = re.sub(r'&amp;pm;', r'±', line)
+    line = re.sub(r'&amp;gt;', r'>', line)
+    line = re.sub(r'&amp;lt;', r'<', line)
+    line = re.sub(r'&amp;ge;', r'>=', line)
+    line = re.sub(r'&amp;le;', r'<=', line)
+    line = re.sub(r'&amp;[lr]dquo;', r'"', line)
+    line = re.sub(r'&amp;#8734;', r'$\\infty$', line)
+    # line = re.sub(r'&amp;CODE;', r'', line)
+    
+    # Convert HTML &symbols;:
+    line = re.sub(r'&quot;', r"'", line)
+    # line = re.sub(r'&SYM;', r'', line)
+    
+    
+    # Convert HTML &lt;/&gt; 'single arrows':
+    line = re.sub(r' &lt;- ', r' <- ', line)
+    line = re.sub(r' &lt;(--*)', r' <\1', line)
+    line = re.sub(r'^&lt;- ', r'<- ', line)
+    line = re.sub(r'^&lt;(--*)', r'<\1', line)
+    line = re.sub(r' -&gt; ', r' -> ', line)
+    line = re.sub(r'(--*)&gt; ', r'\1> ', line)
+    line = re.sub(r' -&gt;$', r' ->', line)
+    line = re.sub(r'(--*)&gt;$', r'\1>', line)
+    line = re.sub(r'&lt;-&gt;', r'<->', line)
+    line = re.sub(r'&lt;(--*)&gt;', r'<\1>', line)
+    # Same with <...>:
+    line = re.sub(r' <- ', r' <- ', line)
+    line = re.sub(r' <(--*)', r' <\1', line)
+    line = re.sub(r'^<- ', r'<- ', line)
+    line = re.sub(r'^<(--*)', r'<\1', line)
+    line = re.sub(r' -> ', r' -> ', line)
+    line = re.sub(r'(--*)> ', r'\1> ', line)
+    line = re.sub(r' ->$', r' ->', line)
+    line = re.sub(r'(--*)>$', r'\1>', line)
+    line = re.sub(r'<->', r'<->', line)
+    line = re.sub(r'<(--*)>', r'<\1>', line)
+    
+    # Convert HTML &lt;/&gt; 'double arrows':
+    line = re.sub(r' &lt;= ', r' <= ', line)
+    line = re.sub(r' &lt;==*', r' <==', line)
+    line = re.sub(r'^&lt;= ', r'<= ', line)
+    line = re.sub(r'^&lt;==*', r'<==', line)
+    line = re.sub(r' =&gt; ', r' => ', line)
+    line = re.sub(r'==*&gt; ', r'==> ', line)
+    line = re.sub(r' =&gt;$', r' =>', line)
+    line = re.sub(r'==*&gt;$', r'==>', line)
+    line = re.sub(r'&lt;=&gt;', r'<=>', line)
+    line = re.sub(r'&lt;==*&gt;', r'<===>', line)
+    # Same with <...>:
+    line = re.sub(r' <= ', r' <= ', line)
+    line = re.sub(r' <==*', r' <==', line)
+    line = re.sub(r'^<= ', r'<= ', line)
+    line = re.sub(r'^<==*', r'<==', line)
+    line = re.sub(r' => ', r' => ', line)
+    line = re.sub(r'==*> ', r'==> ', line)
+    line = re.sub(r' =>$', r' =>', line)
+    line = re.sub(r'==*>$', r'==>', line)
+    line = re.sub(r'<=>', r'<=>', line)
+    line = re.sub(r'<==*>', r'<===>', line)
+    
+    
+    # Convert Greek &letters;:
+    line = re.sub(r'&amp;alpha;', r'$\\alpha$', line)
+    line = re.sub(r'&amp;beta;', r'$\\beta$', line)
+    line = re.sub(r'&amp;gamma;', r'$\\gamma$', line)
+    line = re.sub(r'&amp;delta;', r'$\\delta$', line)
+    line = re.sub(r'&amp;epsilon;', r'$\\epsilon$', line)
+    line = re.sub(r'&amp;zeta;', r'$\\zeta$', line)
+    line = re.sub(r'&amp;eta;', r'$\\eta$', line)
+    line = re.sub(r'&amp;theta;', r'$\\theta$', line)
+    line = re.sub(r'&amp;iota;', r'$\\iota$', line)
+    line = re.sub(r'&amp;kappa;', r'$\\kappa$', line)
+    line = re.sub(r'&amp;lambda;', r'$\\lambda$', line)
+    line = re.sub(r'&amp;mu;', r'$\\mu$', line)
+    line = re.sub(r'&amp;nu;', r'$\\nu$', line)
+    line = re.sub(r'&amp;xi;', r'$\\xi$', line)
+    line = re.sub(r'&amp;omicron;', r'$\\omicron$', line)
+    line = re.sub(r'&amp;pi;', r'$\\pi$', line)
+    line = re.sub(r'&amp;rho;', r'$\\rho$', line)
+    line = re.sub(r'&amp;sigma;', r'$\\sigma$', line)
+    line = re.sub(r'&amp;tau;', r'$\\tau$', line)
+    line = re.sub(r'&amp;upsilon;', r'$\\upsilon$', line)
+    line = re.sub(r'&amp;phi;', r'$\\phi$', line)
+    line = re.sub(r'&amp;chi;', r'$\\chi$', line)
+    line = re.sub(r'&amp;psi;', r'$\\psi$', line)
+    line = re.sub(r'&amp;omega;', r'$\\omega$', line)
+    line = re.sub(r'&amp;Alpha;', r'$\\Alpha$', line)
+    line = re.sub(r'&amp;Beta;', r'$\\Beta$', line)
+    line = re.sub(r'&amp;Gamma;', r'$\\Gamma$', line)
+    line = re.sub(r'&amp;Delta;', r'$\\Delta$', line)
+    line = re.sub(r'&amp;Epsilon;', r'$\\Epsilon$', line)
+    line = re.sub(r'&amp;Zeta;', r'$\\Zeta$', line)
+    line = re.sub(r'&amp;Eta;', r'$\\Eta$', line)
+    line = re.sub(r'&amp;Theta;', r'$\\Theta$', line)
+    line = re.sub(r'&amp;Iota;', r'$\\Iota$', line)
+    line = re.sub(r'&amp;Kappa;', r'$\\Kappa$', line)
+    line = re.sub(r'&amp;Lambda;', r'$\\Lambda$', line)
+    line = re.sub(r'&amp;Mu;', r'$\\Mu$', line)
+    line = re.sub(r'&amp;Nu;', r'$\\Nu$', line)
+    line = re.sub(r'&amp;Xi;', r'$\\Xi$', line)
+    line = re.sub(r'&amp;Omicron;', r'$\\Omicron$', line)
+    line = re.sub(r'&amp;Pi;', r'$\\Pi$', line)
+    line = re.sub(r'&amp;Rho;', r'$\\Rho$', line)
+    line = re.sub(r'&amp;Sigma;', r'$\\Sigma$', line)
+    line = re.sub(r'&amp;Tau;', r'$\\Tau$', line)
+    line = re.sub(r'&amp;Upsilon;', r'$\\Upsilon$', line)
+    line = re.sub(r'&amp;Phi;', r'$\\Phi$', line)
+    line = re.sub(r'&amp;Chi;', r'$\\Chi$', line)
+    line = re.sub(r'&amp;Psi;', r'$\\Psi$', line)
+    line = re.sub(r'&amp;Omega;', r'$\\Omega$', line)
+    
+    
+    # Convert common &lt;/&gt; constructs:
+    line = re.sub(r'Mo&lt;M', r'Mo<M', line)
+    line = re.sub(r'R&gt;R', r'R>R', line)
+    line = re.sub(r'd&lt;P', r'd<P', line)
+    line = re.sub(r'0&lt;\$\beta\$', r'0<$\beta$', line)
+    # Same with <...>:
+    line = re.sub(r'Mo<M', r'Mo<M', line)
+    line = re.sub(r'R>R', r'R>R', line)
+    line = re.sub(r'd<P', r'd<P', line)
+    line = re.sub(r'0<\$\beta\$', r'0<$\beta$', line)
+    # line = re.sub(r'', r'', line)
+    
+    # Convert common &amp; constructs:
+    line = re.sub(r'M&amp;M&amp;A', r'M&M&A', line)
+    line = re.sub(r'M&amp;M', r'M&M', line)
+    line = re.sub(r'M&amp;R', r'M&R', line)
+    line = re.sub(r'H&amp;M', r'H&M', line)
+    line = re.sub(r'R&amp;O', r'R&O', line)
+    line = re.sub(r'R&amp;D', r'R&D', line)
+    line = re.sub(r'A&amp;A', r'A&A', line)
+    
+    
+    # Convert HTML &lt;, &gt; with numbers, equal/approx signs:
+    line = re.sub(r'&lt;([0-9])', r'<\1', line)
+    line = re.sub(r'&gt;([0-9])', r'>\1', line)
+    line = re.sub(r'&lt;=', r'<=', line)
+    line = re.sub(r'&gt;=', r'>=', line)
+    line = re.sub(r'&lt;~', r'<~', line)
+    line = re.sub(r'&gt;~', r'>~', line)
+    line = re.sub(r'~&lt;', r'<~', line)
+    line = re.sub(r'~&gt;', r'>~', line)
+    # Same with <...>:
+    line = re.sub(r'<([0-9])', r'<\1', line)
+    line = re.sub(r'>([0-9])', r'>\1', line)
+    line = re.sub(r'<=', r'<=', line)
+    line = re.sub(r'>=', r'>=', line)
+    line = re.sub(r'<~', r'<~', line)
+    line = re.sub(r'>~', r'>~', line)
+    line = re.sub(r'~<', r'<~', line)
+    line = re.sub(r'~>', r'>~', line)
+    
+    
+    # Leftover &lt;/&gt;:
+    # Convert HTML &lt; &gt; brackets:
+    line = re.sub(r'&lt;([^&]*\|[^&]*)&gt;', r'<\1>', line)
+    
+    # Convert HTML standalone &lt;, &gt;, &amp;:
+    line = re.sub(r' &lt; ', r' < ', line)
+    line = re.sub(r' &lt;&lt; ', r' << ', line)
+    line = re.sub(r' &gt; ', r' > ', line)
+    line = re.sub(r' &gt;&gt; ', r' >> ', line)
+    line = re.sub(r' &amp; ', r' & ', line)
+    line = re.sub(r' &amp;&amp; ', r' && ', line)
+    line = re.sub(r' &gt;&amp; ', r' >& ', line)
+    
+    # Convert remaining &lt;, &gt;, &amp;:
+    line = re.sub(r'\&lt;(---*)', r'<\1', line)
+    line = re.sub(r'\&lt;-', r'<-', line)
+    line = re.sub(r'(---*)\&gt;', r'\1>', line)
+    line = re.sub(r'-\&gt;', r'->', line)
+    line = re.sub(r'\&gt;', r'>', line)
+    line = re.sub(r'\&lt;', r'<', line)
+    line = re.sub(r'\&gt;', r'>', line)
+    line = re.sub(r'&amp;', r'&', line)
+    
+    
+    # ":<math>" seems to occur on Wikipedia - remove colon:
+    line = re.sub(r':\\\[', r'\\[', line)
+    
+    # Remove internal links:
+    line = re.sub(r'\[\[[^]\|]*\|([^]]*)\]\]', r'\1', line)  # Must excape | in match string!
+    line = re.sub(r'\[\[([^]]*)\]\]',         r'\1', line)
+    
+    # Turn references into footnotes:
+    line = re.sub(r'<ref name=([^>]*)>', r'[fn:\1: ', line)
+    line = re.sub(r'<ref>', r'[fn:: ', line)
+    line = re.sub(r'<\/ref>', r'\]', line)
+    line = re.sub(r'{{', r'', line)
+    line = re.sub(r'}}', r'', line)
+    
+    # Convert http(s) links:
+    line = re.sub(r'\[(https*:\/\/[^ ]*) ([^]][^]]*)\]', r'[[\1][\2]]', line)
+    # line = re.sub(r'', r'', line)
+    
+    
+    return line
+
+
+
+
+if __name__ == '__main__':
+    main()
+
