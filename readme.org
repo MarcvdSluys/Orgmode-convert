@@ -12,8 +12,8 @@ A Python script to convert content from a Mediawiki (like Wikipedia) page to Ema
 notes in a Mediawiki running on a local Apache server on my laptop, but all that seemed overkill when I
 discovered Orgmode.  I exported my whole wiki to ~.xml~ files and used this script to do the bulk of the
 conversion to Orgmode.  In addition, I see no reason why the content of a wiki, copied into e.g. a ~.mw~ file,
-could not be converted as well.  Note that ~mediawiki2orgmode.sh~ contains the original Bash version, which may
-be similar but will no longer be developed.
+could not be converted as well.  Note that ~Attic/mediawiki2orgmode.sh~ contains the original Bash version,
+which may be similar but will no longer be developed.
 
 * LaTeX2Orgmode
 A Python script to strip unusable LaTeX commands and convert content to Orgmode format.
