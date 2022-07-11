@@ -140,7 +140,7 @@ sed -i \
 #     -e 's: *&lt;tr align=&quot;center&quot;&gt; *&lt;td&gt; *:| :g' \
 #     -e 's: *&lt;tr align=&quot;center&quot;&gt; *&lt;td colspan=&quot;[0-9]*&quot;&gt; *:| :g' \
 
-# Convert common sup/sub constructs
+# Convert common sup/sub constructs:
 sed -i \
     -e 's|CO&lt;sub&gt;2&lt;/sub&gt;|CO_2|g' \
     -e 's|&lt;sup&gt;2&lt;/sup&gt;|^2|g' \
@@ -373,7 +373,6 @@ sed -i \
     -e 's|R&gt;R|R>R|g' \
     -e 's|d&lt;P|d<P|g' \
     -e 's|0&lt;\$\beta\$|0<$\beta$|g' \
-    -e 's|||g' \
     $OUTFILE
 # Same with <...>:
 sed -i \
@@ -381,7 +380,6 @@ sed -i \
     -e 's|R>R|R>R|g' \
     -e 's|d<P|d<P|g' \
     -e 's|0<\$\beta\$|0<$\beta$|g' \
-    -e 's|||g' \
     $OUTFILE
 #     -e 's|||g' \
     
