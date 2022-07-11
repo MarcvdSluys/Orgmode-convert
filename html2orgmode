@@ -1,0 +1,245 @@
+#!/bin/env python
+# -*- coding: utf-8 -*-
+
+""" html2orgmode:  Try to convert html to Orgmode.
+    Aim at code saved from Firefox Read view (the hope is that this is relatively uniform):
+      1. Load the page in Firefox;
+      2. Activate Read view;
+      3. Select File > Save as > Web page (, complete).
+         
+    2022-07-11, MvdS: initial version, adapted from mediawiki2orgmode.
+"""
+
+# PYTHON_ARGCOMPLETE_OK
+
+
+import colored_traceback
+colored_traceback.add_hook()
+
+import re
+
+
+
+def main():
+    """Main function."""
+    
+    infile,outfile,verbosity = get_arguments()
+    file_html_to_orgmode(infile, outfile, verbosity)
+    
+    exit(0)
+
+
+def get_arguments():
+    """Get CLI arguments.
+    
+    Parameters:
+    
+    Returns:
+      (str):  Input file name.
+      (str):  Output file name.
+    """
+    
+    import argparse
+    import argcomplete
+    import sys
+    
+    # Parse command-line arguments:
+    parser = argparse.ArgumentParser(description="Try to convert a html file to Orgmode.",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
+    
+    # Required arguments:
+    parser.add_argument("infile",            type=str, default=None, help="name of the input html file (file.html/.htm/.xml)")
+    parser.add_argument("-o", "--outfile",   type=str, default=None, help="name of the output Orgmode file (file.org)")
+    
+    parser.add_argument("-v", "--verbosity", action="count", default=1, help="increase output verbosity")  # Counts number of occurrences
+    parser.add_argument("-q", "--quiet",     action="store_true", help="suppress output")  # Default = False
+    
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+    
+    if args.outfile is None:
+        outfile = str(args.infile)
+        outfile = re.sub(r'\.html', r'.org', outfile)       # Replace extension .html with .org
+        outfile = re.sub(r'\.htm', r'.org', outfile)        # Replace extension .htm with .org
+        outfile = re.sub(r'\.xml', r'.org', outfile)        # Replace extension .xml with .org
+        
+        outfile = outfile+'.org'                            # In case nothing happened above, append .org
+        outfile = re.sub(r'\.org\.org', r'.org', outfile)   # In case we have a double extension, remove one
+    else:
+        outfile = args.outfile
+        
+    if args.infile == outfile:
+        sys.stderr.write('Input and output file have the same name: '+outfile+'\n')
+    
+    verbosity = args.verbosity
+    if args.quiet: verbosity=0  # No output
+    
+    if verbosity>0:
+        print('Input file:  '+args.infile)
+        print('Output file: '+outfile)
+        # print('Verbosity:   '+str(verbosity))
+    
+    return args.infile, outfile, verbosity
+
+
+def file_html_to_orgmode(infile, outfile,verbosity):
+    """Covert lines of text from html format to Orgmode format.
+    
+    Parameters:
+      infile (str):     Name of the input file.
+      outfile (str):    Name of the output file.
+      verbosity (int):  Verbosity level (0=quiet).
+    """
+    
+    # Open the input and output files:
+    ofl = open(outfile,'w')
+    # ofl.write('# #+startup: latexpreview  # Note: this may take a looong time when uncommented...\n')
+    
+    iline = 0
+    with open(infile, 'r') as lines:
+        try:
+            while True:
+                iline += 1
+                
+                # Read data line and extract column contents:
+                line = next(lines)
+                
+                line = line_html_to_orgmode(line)
+                # line = line_latex_to_orgmode(line)
+                
+                ofl.write('%s' % (line))
+                # print(iline, line)
+        except StopIteration:
+            if verbosity>0: print(str(iline)+' lines processed.')
+            exit
+    
+    return
+
+
+def line_html_to_orgmode(line):
+    """Convert a line of html code to Orgmode.
+
+    Parameters:  
+      line (str):  The line containing html code.
+
+    Returns:  
+      (str):  A line containing Orgmode code.
+    """
+    
+    
+    # All lines starting with < and ending with corresponding >:
+    line = re.sub(r'^ *<[^>]*> *\n*$', r'', line)
+    
+    # Comment at top:
+    line = re.sub(r'^.*This Source Code Form is subject to the terms of the Mozilla.*\n$', r'', line)
+    line = re.sub(r'^.*If a copy of the MPL was not distributed.*\n$', r'', line)
+    line = re.sub(r'^.*You can obtain one at http:.*\n$', r'', line)
+    
+    # Header:
+    line = re.sub(r'^ *<!DOCTYPE html> *\n*$', r'', line)
+    line = re.sub(r' *<html platform=[^>]*> *', r'', line)
+    line = re.sub(r' *<[\/]*html> *', r'', line)
+    line = re.sub(r' *<[\/]*head> *', r'', line)
+    line = re.sub(r'^ *<link rel="stylesheet" [^>]*> *\n*$', r'', line)
+    line = re.sub(r'^ *<meta [^>]*> *\n*$', r'', line)
+    line = re.sub(r' *<link rel="stylesheet" [^>]*> *', r'', line)
+    line = re.sub(r' *<link rel="shortcut icon" [^>]*> *', r'', line)
+    line = re.sub(r'^ *<title>(.*)<\/title> *', r'#+title: \1', line)
+    
+    # Body:
+    line = re.sub(r' *<body class=[^>]*> *', r'', line)
+    line = re.sub(r' *<[\/]*body> *', r'', line)
+    line = re.sub(r'^ *<div[^>]*><\/div> *\n*$', r'', line)
+    
+    # Text settings:
+    line = re.sub(r'^ *<button .*><\/button> *\n*$', r'', line)
+    line = re.sub(r'^ *<div class="font-type-buttons radiorow">.*</label></div> *\n*$', r'', line)
+    line = re.sub(r'^ *<div class="color-scheme-buttons radiorow">.*</label></div> *\n*$', r'', line)
+    line = re.sub(r'^ *<span class="font-size-value">.*</span> *\n*$', r'', line)
+    line = re.sub(r'^ *<span class="content-width-value">.*</span> *\n*$', r'', line)
+    line = re.sub(r'^ *<span class="line-height-value">.*</span> *\n*$', r'', line)
+    line = re.sub(r'^ *</button></div> *\n*$', r'', line)
+    line = re.sub(r'^ *<ul class="dropdown narrate-dropdown">.*<button class="select-toggle" aria-controls="voice-options"> *\n*$', r'', line)
+    line = re.sub(r'^ *<span class="label">Voice:</span> *<span class="current-voice"></span> *\n*$', r'', line)
+    line = re.sub(r'^ *<div class="options" id="voice-options" .*Save To Pocket</span></button></div> *\n*$', r'', line)
+    line = re.sub(r'^ *<a class="domain reader-domain".*> *\n*$', r'', line)
+    line = re.sub(r'^ *<div class="reader-estimated-time".*>.*</div> *\n*$', r'', line)
+    
+    # Footer (pocket):
+    line = re.sub(r'^.*http[s]*://getpocket.com.*\n*$', r'', line)
+    line = re.sub(r'^ *<header class="pocket-cta-header">.*</header> *\n*$', r'', line)
+    line = re.sub(r'^ *<p class="pocket-cta-subhead">.*\n*$', r'', line)
+    line = re.sub(r'^.*a quiet, calm space that’s perfect.*\n*$', r'', line)
+    line = re.sub(r'^.*away all the distractions of the internet so you.*\n*$', r'', line)
+    line = re.sub(r'^.*focus.</p>.*\n*$', r'', line)
+    line = re.sub(r'^.*surfaces the best articles out there—new.*\n*$', r'', line)
+    line = re.sub(r'^.*timeless classics—and we do this with.*\n*$', r'', line)
+    line = re.sub(r'^.*you’ve come to expect from Firefox.*\n*$', r'', line)
+    # line = re.sub(r'^.*.*\n*$', r'', line)
+    # line = re.sub(r'^ * *\n*$', r'', line)
+        
+    # Sections:
+    line = re.sub(r'^ *<h1 class="reader-title">([^>]*)</h1> *\n*$', r'', line)  # Same as title, delete
+    line = re.sub(r'\n* *<h2[^>]*>([^<]*)</h2> *\n*', r'\n* \1\n', line)
+    line = re.sub(r'\n* *<h3[^>]*>([^<]*)</h3> *\n*', r'\n** \1\n', line)
+    line = re.sub(r'\n* *<h4[^>]*>([^<]*)</h4> *\n*', r'\n*** \1\n', line)
+    line = re.sub(r'\n* *<h5[^>]*>([^<]*)</h5> *\n*', r'\n**** \1\n', line)
+    line = re.sub(r'\n* *<h6[^>]*>([^<]*)</h6> *\n*', r'\n***** \1\n', line)
+    
+    # Figures and captions:
+    # Doesn't work: multiline...  line = re.sub(r'^ *<div[^>]*><figure><div><div><picture><source media="[^"]*"><source media="[^"]*"><img alt="[^"]*" src="([^"]*)" class="moz-reader-block-img" moz-reader-center="true"></picture></div><p>([^<]*)</p></div><figcaption>([^<]*)</figcaption></figure></div>', r'\1  Caption: \3 (credit: \2)', line)
+    line = re.sub(r' *src="([^"]*)" *', r'[[file:\1]] ', line)
+    line = re.sub(r'</picture></div><p>([^<]*)</p></div>', r' ((CREDIT: \1)) ', line)  # Credit comes before caption; put it on a new line, swap below.
+    line = re.sub(r'<figcaption>([^<]*)</figcaption></figure></div>', r' ((CAPTION: \1)) ', line)
+    line = re.sub(r'\n* *</*div> *\n*', r'', line)
+    line = re.sub(r'\n* *</*figure> *\n*', r'', line)
+    line = re.sub(r'\n* *</*picture> *\n*', r'', line)
+    line = re.sub(r'\n* *<source media="[^"]*"> *\n*', r'', line)
+    
+    # Top figure:
+    line = re.sub(r'\n* *<div class="moz-reader-content reader-show-element"> *\n*', r'', line)
+    line = re.sub(r'\n* *<div id="readability-page-[^"]*" class="[^"]*"> *\n*', r'', line)
+    line = re.sub(r'\n* *<div id="content"> *\n*', r'', line)
+    
+    # More figure stuff:
+    line = re.sub(r'\n* *<img alt="[^"]*" *\n*', r'', line)
+    line = re.sub(r'\n* *class="moz-reader-block-img">* *\n*', r'', line)
+    line = re.sub(r'\n* *moz-reader-center="[a-z]*">* *\n*', r' ', line)
+    
+    # More figure stuff:
+    line = re.sub(r'\n* *<div data-testid="carousel"> *\n*', r'', line)
+    line = re.sub(r'\n* *<[/]*ul> *\n*', r'', line)
+    line = re.sub(r'\n* *<li data-testid="carousel-slide"> *\n*', r'', line)
+    line = re.sub(r'\n* *</li> *\n*', r'', line)
+    # line = re.sub(r'\n* * *\n*', r'', line)
+
+    # Sort out figures, captions and credits
+    line = re.sub(r' *(\[\[file:[^]]*\]\]) *', r'\n\n\1', line)  # On a new line
+    line = re.sub(r'\n* *\(\(CREDIT: (.*)\)\) *\(\(CAPTION: (.*)\)\) *\n*', r'\nFigure: \2 (credit: \1)', line)  # Swap caption and credit
+    line = re.sub(r'\n* *\(\(CREDIT: (.*)\)\) *\n*', r'\n(figure credit: \1)', line)  # No Caption
+    line = re.sub(r'\n* *\(\(CAPTION: (.*)\)\) *\n*', r'\nFigure: \1', line)  # No credit
+    
+    
+    # Links:
+    line = re.sub(r' *target="[^"]*" *', r'', line)
+    line = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r'[[\1][\2]]', line)
+    
+    
+    # Paragraphs (<.*p.*> is also matched above, the current block needs to go AFTER that):
+    line = re.sub(r'\n* *<p aria-hidden="[^"]*">[^<]*</p> *\n*', r'\n\n', line)  # Duplicate of figure caption? - Not sure what this is
+    line = re.sub(r'\n* *</p><p id="[0-9]*"> *\n*', r'\n\n', line)
+    line = re.sub(r'\n* *<p></p> *\n*', r'\n\n', line)
+    line = re.sub(r'\n* *</p><p> *\n*', r'\n\n', line)
+    line = re.sub(r'\n* *<p id="[0-9]*"> *\n*', r'\n\n', line)
+    line = re.sub(r'\n* *</*p> *\n*', r'\n\n', line)
+    # line = re.sub(r'^ * *\n*$', r'', line)
+    
+
+    return line
+
+
+
+
+if __name__ == '__main__':
+    main()
+

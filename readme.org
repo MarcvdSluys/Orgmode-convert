@@ -3,7 +3,7 @@
 The repository *Orgmode-convert* contains a number of (Bash or Python) scripts that I use to convert
 information from and to Emacs Orgmode format.  Note that these are rough scripts, not fancy programs, so read
 and check them before use.  Also, don't expect a full conversion, but be prepared to so some manual hard
-labour after running a script.
+labour after running a script.  The number of files I have tested these scripts on may be very limited!
 
 Additions and improvements in the form of pull requests (or issues) are welcome!
 
@@ -17,4 +17,13 @@ which may be similar but will no longer be developed.
 
 * LaTeX2Orgmode
 A Python script to strip unusable LaTeX commands and convert content to Orgmode format.
+
+* HTML2Orgmode
+A Python script to strip unusable HTML code and convert content to Orgmode format.  I have focused on the
+'clean', simplified format of *Firefox Reader view*, with the hope that this is rather uniform across pages.
+Hence, to download an HTML file for conversion:
+1. Load the page in Firefox;
+2. Click on the *Toggle reader view* button at the right of the address bar, press ~Ctrl-Alt-R~ or choose ~View >
+   Enter Reader View~ in the menu to activate the *Reader view*;
+3. Press ~Ctrl-S~ or choose ~File > Save as~ in the menu and save the page (complete, or HTML only).
 

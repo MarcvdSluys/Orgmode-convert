@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """ mediawiki2orgmode:  Try to convert Mediawiki to Orgmode.
-    2022-02-23, MvdS: initial version.
+    2022-02-23, MvdS: initial version (Bash).
+    2022-07-11, MvdS: translate to Python.
 """
 
 # PYTHON_ARGCOMPLETE_OK
