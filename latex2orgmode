@@ -130,12 +130,26 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\bibliography.*\n', r'', line)
     line = re.sub(r'^.*\\DeclareRobustCommand.*\n', r'', line)
     line = re.sub(r'^.*\\tableofcontents.*\n', r'', line)
+    line = re.sub(r'^.*\\onehalfspacing.*\n', r'', line)
+    line = re.sub(r'^.*\\definecolor[\[{].*\n', r'', line)  # Followed by [ or {
+    line = re.sub(r'^.*\\color[\[{].*\n', r'', line)
+    line = re.sub(r'^.*\\fancyhead[\[{].*\n', r'', line)
+    line = re.sub(r'^.*\\fancyfoot[\[{].*\n', r'', line)
     
     # Title, author, etc:
     line = re.sub(r'\\title[* ]*\{([^}]*)\}',  r'#+title:  \1', line)
     line = re.sub(r'\\author[* ]*\{([^}]*)\}', r'#+author: \1', line)
     line = re.sub(r'\\email[* ]*\{([^}]*)\}',  r'#+email:  \1', line)
     line = re.sub(r'\\date[* ]*\{([^}]*)\}',   r'#+date:   \1', line)
+    
+    # Text colour:
+    line = re.sub(r'^ *\\SetRowColor\{[^}]*\} *\n', r'', line)
+    line = re.sub(r' *\\SetRowColor\{[^}]*\} *', r'', line)
+    line = re.sub(r' *\\textcolor\{[^}]*\} *', r'', line)
+    line = re.sub(r' *\\hhline\{>\{\\arrayrulecolor\{[^}]*\}\}--\} *', r'----', line)
+    line = re.sub(r' *\\hhline\{>\{\}--\} *', r'----', line)
+    line = re.sub(r' *\\arrayrulecolor\{[^}]*\} *', r'', line)
+    
     
     # Resolve aliases/macros/newcommands:
     line = re.sub(r'^\\bel *\{([^}]*)\}', r'\n\\label{\1}\n\\begin{equation}', line)  # \bel = \begin{eq} + \label
@@ -199,14 +213,26 @@ def line_latex_to_orgmode(line):
     
     # Cetera:
     line = re.sub(r'^.*\\maketitle.*\n', r'', line)
-    line = re.sub(r'^.*\\setcounter.*\n', r'', line)
-    line = re.sub(r'^.*\\setlength.*\n', r'', line)
-    line = re.sub(r'^.*\\newlength.*\n', r'', line)
+    line = re.sub(r'^.*\\setcounter[\[{].*\n', r'', line)
+    line = re.sub(r'^.*\\setlength[\[{].*\n', r'', line)
+    line = re.sub(r'^.*\\newlength[\[{].*\n', r'', line)
+    line = re.sub(r'^.*\\addtolength[\[{].*\n', r'', line)
     line = re.sub(r'^.*\\raggedleft.*\n', r'', line)
     line = re.sub(r'^.*\\raggedright.*\n', r'', line)
-    line = re.sub(r'^.*\\vspace.*\n', r'\n\n', line)
+    line = re.sub(r'^ *\\raggedcolumns *\n', r'', line)
+    line = re.sub(r'^ *\\vspace\**\{[^}]*\} *\n', r'\n\n', line)
+    line = re.sub(r' *\\vspace\**\{[^}]*\} *', r'\n\n', line)
+    line = re.sub(r'^ *\\addvspace\**\{[^}]*\} *\n', r'\n\n', line)
+    line = re.sub(r' *\\addvspace\**\{[^}]*\} *', r'\n\n', line)
+    line = re.sub(r'^ *\\hspace\**\{[^}]*\} *\n', r'', line)
+    line = re.sub(r' *\\hspace\**\{[^}]*\} *', r'', line)
     line = re.sub(r'\\vfill', r'', line)
-    
+    line = re.sub(r'^ *\\noindent *\n', r'', line)
+    line = re.sub(r' *\\noindent *', r'', line)
+    line = re.sub(r' *\\parbox\{[^}]*\} *', r'', line)
+    line = re.sub(r'^ *\\par *\n', r'', line)
+    line = re.sub(r' *\\par *', r'', line)
+        
     line = re.sub(r'\} *\\label *\{([^}]*)\}', r'}\n\\label{\1}', line)  # Move trailing \label{} to its own line
     
     
@@ -230,6 +256,10 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\begin\{multicols.*\n', r'', line)
     line = re.sub(r'^.*\\end\{multicols.*\n', r'', line)
     line = re.sub(r'\\columnbreak', r'', line)
+    
+    line = re.sub(r'\\mymulticolumn\{[^}]*\}\{[^{]*\{[^}]*\}\}\{[^{]*\{([^}]*)\}\}', r'\1', line)
+    line = re.sub(r'\\mymulticolumn\{[^}]*\}\{[^{]*\{[^}]*\}\}\{([^}]*)\}', r'\1', line)
+    
     
     line = re.sub(r'\\centering', r'', line)
     line = re.sub(r'\\caption\{', r'Caption: ', line)
@@ -294,9 +324,24 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'\\textbf[* ]*\{([^}]*)\}', r'*\1*', line)
     line = re.sub(r'\\textit[* ]*\{([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\\emph[* ]*\{([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\\uline[* ]*\{([^}]*)\}', r'_\1_', line)
     line = re.sub(r'\{\\bf *([^}]*)\}', r'*\1*', line)
     line = re.sub(r'\{\\it *([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\{\\em *([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\\bf\{([^}]*)\}', r'*\1*', line)
+    line = re.sub(r'\\it\{([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\\em\{([^}]*)\}', r'/\1/', line)
+    
+    # Text:
+    line = re.sub(r'\\textrm[* ]*\{([^}]*)\}', r'\1', line)
+    
+    # Math text:
+    line = re.sub(r'\\mathbf[* ]*\{([^}]*)\}', r'*\1*', line)
+    line = re.sub(r'\\mathrm[* ]*\{([^}]*)\}', r'\1', line)
+    line = re.sub(r' *\\textgreater\{\} *', r' > ', line)
+    line = re.sub(r' *\\textless\{\} *', r' < ', line)
+    line = re.sub(r'\\textasciicircum\{\}', r'^', line)
+    line = re.sub(r'\\textasciicircum', r'^', line)
     
     # Spaces in inline equations:
     line = re.sub(r'^([^\$]*\$) ', r'\1', line)  # Remove space after first $ in line
@@ -318,10 +363,16 @@ def line_latex_to_orgmode(line):
     # Fix equations:
     line = re.sub(r'\\int *\\int *\\int', r'\\iiint', line)  # Need amsmath
     line = re.sub(r'\\int *\\int', r'\\iint', line)  # Need amsmath
+    line = re.sub(r'\|\|([^|]*)\|\|', r'$\\norm{\1}$', line)  # Absolute value vector ||v|| -> $||v||$
     
     # Footnote: ISSUE: may span multiple lines...
     line = re.sub(r'\\footnote\{([^}]*)\}', r' [fn:1: \1]', line)  # Single-line footnote
     line = re.sub(r'\\footnote\{', r' [fn:1: ', line)  # Left over: multi-line footnote: DiY
+    
+    # Custom stuff
+    # line = re.sub(r'^(.*) *\\tn *$', r'| \1 |', line)  # \tn at end of line for \tabularnewline in cheatography sheets
+    line = re.sub(r'^(.*) *\\tn *$', r'\1', line)  # Get rid of the tables
+    
     
     # line = re.sub(r'^.*\\.*\n', r'', line)
     # line = re.sub(r'', r'', line)
