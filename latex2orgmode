@@ -95,7 +95,25 @@ def file_latex_to_orgmode(infile, outfile):
         except StopIteration:
             print(str(iline)+' lines processed.')
             exit
+            
+    # Close output file
+    ofl.close()
     
+    
+    # Reopen output file and remove empty lines:
+    # Reopen the output (Org mode) file and read its contents:
+    ofl = open(outfile,'r')
+    lines = ofl.read()  # Returns lines as a single string, including '\n'
+    ofl.close()
+    
+    # Remove empty lines:
+    for itr in range(10):
+        lines = re.sub(r' *\n *\n *\n', r'\n\n', lines)
+        
+    # Write the result back to the same file:
+    ofl = open(outfile,'w')
+    ofl.write(lines)
+    ofl.close()
     return
 
 
@@ -466,6 +484,10 @@ def line_latex_to_orgmode(line):
     
     # line = re.sub(r'[{}]', r'', line)  # Remove leftover braces
 
+    # Remove spaces:
+    line = re.sub(r'^ {1,99}', r'', line)  # Remove leading spaces
+    line = re.sub(r' {1,99}$', r'', line)  # Remove trailing spaces
+    
     return line
 
 
