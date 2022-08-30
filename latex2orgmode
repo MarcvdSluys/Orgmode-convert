@@ -109,12 +109,12 @@ def line_latex_to_orgmode(line):
       (str):  A line containing Orgmode code.
     """
     
-    # line = re.sub(r'^ *\n *\n *\n', r'\n\n', line)  # Remove series of empty lines
     # line = re.sub(r'^ *\n', r'', line)  # Remove empty lines - CHECK remove this code line later!
     
     # Preamble:
     line = re.sub(r'^.*\\documentclass.*\n', r'', line)
     line = re.sub(r'^.*\\usepackage.*\n', r'', line)
+    line = re.sub(r'^.*\\input.*\n', r'', line)
     line = re.sub(r'^.*\\graphicspath.*\n', r'', line)
     line = re.sub(r'^ *%.*\n', r'', line)
     line = re.sub(r'^.*\\pdfinfo.*\n', r'', line)
@@ -141,6 +141,8 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'\\author[* ]*\{([^}]*)\}', r'#+author: \1', line)
     line = re.sub(r'\\email[* ]*\{([^}]*)\}',  r'#+email:  \1', line)
     line = re.sub(r'\\date[* ]*\{([^}]*)\}',   r'#+date:   \1', line)
+    line = re.sub(r'^ \\titlepage *\n',   r'', line)
+    line = re.sub(r' *\\titlepage *',   r'', line)
     
     # Text colour:
     line = re.sub(r'^ *\\SetRowColor\{[^}]*\} *\n', r'', line)
@@ -148,6 +150,7 @@ def line_latex_to_orgmode(line):
     line = re.sub(r' *\\textcolor\{[^}]*\} *', r'', line)
     line = re.sub(r' *\\hhline\{>\{\\arrayrulecolor\{[^}]*\}\}--\} *', r'----', line)
     line = re.sub(r' *\\hhline\{>\{\}--\} *', r'----', line)
+    line = re.sub(r'^ *\\hline *$', r'----', line)
     line = re.sub(r' *\\arrayrulecolor\{[^}]*\} *', r'', line)
     
     
@@ -239,6 +242,22 @@ def line_latex_to_orgmode(line):
     # Begin/end stuff:
     line = re.sub(r'^.*\\begin\{document\}.*\n', r'', line)
     line = re.sub(r'^.*\\end\{document\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{center\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{center\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{tiny\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{tiny\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{footnotesize\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{footnotesize\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{scriptsize\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{scriptsize\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{normalsize\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{normalsize\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{[Ll]arge\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{[Ll]arge\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{LARGE\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{LARGE\}.*\n', r'', line)
+    line = re.sub(r'^.*\\begin\{[Hh]uge\}.*\n', r'', line)
+    line = re.sub(r'^.*\\end\{[Hh]uge\}.*\n', r'', line)
     
     # Figures:
     line = re.sub(r'^.*\\begin\{figure.*\n', r'', line)
@@ -257,12 +276,24 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\end\{multicols.*\n', r'', line)
     line = re.sub(r'\\columnbreak', r'', line)
     
+    line = re.sub(r'^ *\\\\\[[0-9.\-]*[cme]m\] *\n', r'', line)  # Extra space between table rows
+    line = re.sub(r'^ *\[[0-9.\-]*[cme]m\] *\n', r'', line)
+    line = re.sub(r'\\\\\[[0-9.\-]*[cme]m\] *$', r'', line)
+    line = re.sub(r'\[[0-9.\-]*[cme]m\] *$', r'', line)
+    line = re.sub(r'\\\\\[[0-9.\-]*[cme]m\]', r'', line)
+    line = re.sub(r'\[[0-9.\-]*[cme]m\]', r'', line)
+    
     line = re.sub(r'\\mymulticolumn\{[^}]*\}\{[^{]*\{[^}]*\}\}\{[^{]*\{([^}]*)\}\}', r'\1', line)
     line = re.sub(r'\\mymulticolumn\{[^}]*\}\{[^{]*\{[^}]*\}\}\{([^}]*)\}', r'\1', line)
     
     
     line = re.sub(r'\\centering', r'', line)
     line = re.sub(r'\\caption\{', r'Caption: ', line)
+    
+    # Colorbox (could be around figure removed above (in Beamer)): 
+    line = re.sub(r'\\colorbox\[[^]]*\]\{[^}]*\}\{([^}]*)\}', r'\1', line)
+    line = re.sub(r'\\colorbox\{[^}]*\}\{([^}]*)\}', r'\1', line)
+   
     
     # Lists:
     line = re.sub(r'^.*\\begin\{itemize.*\n', r'', line)
@@ -301,13 +332,63 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'^.*\\newtheorem\{.*\n', r'', line)
     
     # Chapters, sections and paragraphs:
-    line = re.sub(r'\\chapter[* ]*\{([^}]*)\}', r'\n* \1', line)
-    line = re.sub(r'\\section[* ]*\{([^}]*)\}', r'\n* \1', line)
-    line = re.sub(r'\\subsection[* ]*\{([^}]*)\}', r'\n** \1', line)
-    line = re.sub(r'\\subsubsection[* ]*\{([^}]*)\}', r'\n*** \1', line)
-    line = re.sub(r'\\paragraph[* ]*\{([^}]*)\}', r'\n**** \1', line)
+    line = re.sub(r'^ *\\chapter[* ]*\{\} *\n', r'', line)
+    line = re.sub(r'^ *\\section[* ]*\{\} *\n', r'', line)
+    line = re.sub(r'^ *\\subsection[* ]*\{\} *\n', r'', line)
+    line = re.sub(r'^ *\\subsubsection[* ]*\{\} *\n', r'', line)
+    line = re.sub(r'^ *\\paragraph[* ]*\{\} *\n', r'', line)
+    
+    line = re.sub(r' *\\chapter[* ]*\{\} *', r'', line)
+    line = re.sub(r' *\\section[* ]*\{\} *', r'', line)
+    line = re.sub(r' *\\subsection[* ]*\{\} *', r'', line)
+    line = re.sub(r' *\\subsubsection[* ]*\{\} *', r'', line)
+    line = re.sub(r' *\\paragraph[* ]*\{\} *', r'', line)
+    
+    line = re.sub(r'^ *\\chapter[* ]*\{([^}]*)\} *\n', r'\n* \1', line)
+    line = re.sub(r'^ *\\section[* ]*\{([^}]*)\} *\n', r'\n* \1', line)
+    line = re.sub(r'^ *\\subsection[* ]*\{([^}]*)\} *\n', r'\n** \1', line)
+    line = re.sub(r'^ *\\subsubsection[* ]*\{([^}]*)\} *\n', r'\n*** \1', line)
+    line = re.sub(r'^ *\\paragraph[* ]*\{([^}]*)\} *\n', r'\n**** \1', line)
+    
+    line = re.sub(r' *\\chapter[* ]*\{([^}]*)\} *', r'\n* \1', line)
+    line = re.sub(r' *\\section[* ]*\{([^}]*)\} *', r'\n* \1', line)
+    line = re.sub(r' *\\subsection[* ]*\{([^}]*)\} *', r'\n** \1', line)
+    line = re.sub(r' *\\subsubsection[* ]*\{([^}]*)\} *', r'\n*** \1', line)
+    line = re.sub(r' *\\paragraph[* ]*\{([^}]*)\} *', r'\n**** \1', line)
     
     line = re.sub(r'^ *\\textbf[* ]*\{([^}]*)\} *$', r'\n**** \1', line)  # full-line \textbf appears to be used as a paragraph
+    
+    # Beamer frames/slides:
+    line = re.sub(r'^.*\\frame[\[{].*\n', r'', line)  # Followed by [ or {
+    line = re.sub(r'^ *\\frametitle[* ]*\{([^}]*)\} *\n', r'\n*** \1', line)  # Assume \section and \subsection are converted to * and **
+    line = re.sub(r' *\\frametitle[* ]*\{([^}]*)\} *', r'\n*** \1', line)  # Assume \section and \subsection are converted to * and **
+    
+    line = re.sub(r'^ *\\begin\{block\}[* ]*\{\} *\n', r'', line)  # Block w/o title -> nothing
+    line = re.sub(r' *\\begin\{block\}[* ]*\{\} *', r'', line)  # Block w/o title -> nothing
+    line = re.sub(r'^ *\\begin\{block\}[* ]*\{([^}]*)\} *\n', r'\n**** \1', line)  # Assume \section, \subsection and \frametitle are converted to *, ** and ***
+    line = re.sub(r' *\\begin\{block\}[* ]*\{([^}]*)\} *', r'\n**** \1', line)  # Assume \section, \subsection and \frametitle are converted to *, ** and ***
+    line = re.sub(r'^ *\\end\{block\} *\n', r'', line)
+    
+    line = re.sub(r'^ *\\begin\{columns\}[* ]* *\n', r'', line)
+    line = re.sub(r'^ *\\end\{columns\} *\n', r'', line)
+    line = re.sub(r'^ *\\begin\{column\}[* ]*\{.*\} *\n', r'', line)
+    line = re.sub(r'^ *\\end\{column\} *\n', r'', line)
+    
+    line = re.sub(r'^ *\\uncover<[0-9]*->\{ *\n', r'', line)
+    line = re.sub(r'\\uncover<[0-9]*->\{', r'', line)
+    
+    # My Beamer macros:
+    line = re.sub(r'\{\\bluetext ([^{}]*)\}', r' blue: \1', line)
+    line = re.sub(r'\{\\redtext ([^{}]*)\}', r' red: \1', line)
+    line = re.sub(r'\{\\purpletext ([^{}]*)\}', r' purple: \1', line)
+    line = re.sub(r'\{\\greentext ([^{}]*)\}', r' green: \1', line)
+    line = re.sub(r'\{\\yellowtext ([^{}]*)\}', r' yellow: \1', line)
+    line = re.sub(r'\\bluetext ', r'blue: ', line)
+    line = re.sub(r'\\redtext ', r'red: ', line)
+    line = re.sub(r'\\purpletext ', r'purple: ', line)
+    line = re.sub(r'\\greentext ', r'green: ', line)
+    line = re.sub(r'\\yellowtext ', r'yellow: ', line)
+    line = re.sub(r'\\normaltext', r'', line)
     
     # Labels and references:
     line = re.sub(r'\\label[* ]*\{([^}]*)\}', r'label:\1', line)
@@ -320,17 +401,23 @@ def line_latex_to_orgmode(line):
     line = re.sub(r'\\url[* ]*\{([^}]*)\}', r' \1 ', line)
     line = re.sub(r'\\href[* ]*\{([^}]*)\}\{([^}]*)\}', r' \2 (\1) ', line)
     
-    # Bold and italics:
+    # Bold, italics, etc:
     line = re.sub(r'\\textbf[* ]*\{([^}]*)\}', r'*\1*', line)
     line = re.sub(r'\\textit[* ]*\{([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\\textsc[* ]*\{([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\\emph[* ]*\{([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\\uline[* ]*\{([^}]*)\}', r'_\1_', line)
+    
     line = re.sub(r'\{\\bf *([^}]*)\}', r'*\1*', line)
     line = re.sub(r'\{\\it *([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\{\\em *([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\{\\sc *([^}]*)\}', r'/\1/', line)
+    
     line = re.sub(r'\\bf\{([^}]*)\}', r'*\1*', line)
     line = re.sub(r'\\it\{([^}]*)\}', r'/\1/', line)
     line = re.sub(r'\\em\{([^}]*)\}', r'/\1/', line)
+    line = re.sub(r'\\sc\{([^}]*)\}', r'/\1/', line)
+    
     
     # Text:
     line = re.sub(r'\\textrm[* ]*\{([^}]*)\}', r'\1', line)
@@ -378,7 +465,7 @@ def line_latex_to_orgmode(line):
     # line = re.sub(r'', r'', line)
     
     # line = re.sub(r'[{}]', r'', line)  # Remove leftover braces
-    
+
     return line
 
 
