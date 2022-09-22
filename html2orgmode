@@ -148,6 +148,7 @@ def line_html_to_orgmode(line):
     
     # Text settings:
     line = re.sub(r'<\/*b>', r'*', line, flags=re.I)
+    line = re.sub(r'<\/*strong>', r'*', line, flags=re.I)
     line = re.sub(r'<\/*i>', r'/', line, flags=re.I)
     line = re.sub(r'<\/*u>', r'_', line, flags=re.I)
     line = re.sub(r'<\/*font[^>]*>', r'', line, flags=re.I)
@@ -155,30 +156,37 @@ def line_html_to_orgmode(line):
     line = re.sub(r'^ *<button .*><\/button> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="font-type-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="color-scheme-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
+    line = re.sub(r'^ *</button></div> *\n*$', r'', line, flags=re.I)
+    
+    line = re.sub(r'^ *<div class="options" id="voice-options" .*Save To Pocket</span></button></div> *\n*$', r'', line, flags=re.I)
+    line = re.sub(r'^ *<div class="reader-estimated-time".*>.*</div> *\n*$', r'', line, flags=re.I)
+    
     line = re.sub(r'^ *<span class="font-size-value">.*</span> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<span class="content-width-value">.*</span> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<span class="line-height-value">.*</span> *\n*$', r'', line, flags=re.I)
-    line = re.sub(r'^ *</button></div> *\n*$', r'', line, flags=re.I)
-    line = re.sub(r'^ *<ul class="dropdown narrate-dropdown">.*<button class="select-toggle" aria-controls="voice-options"> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<span class="label">Voice:</span> *<span class="current-voice"></span> *\n*$', r'', line, flags=re.I)
-    line = re.sub(r'^ *<div class="options" id="voice-options" .*Save To Pocket</span></button></div> *\n*$', r'', line, flags=re.I)
-    line = re.sub(r'^ *<a class="domain reader-domain".*> *\n*$', r'', line, flags=re.I)
-    line = re.sub(r'^ *<div class="reader-estimated-time".*>.*</div> *\n*$', r'', line, flags=re.I)
     
+    line = re.sub(r'^ *<ul class="dropdown narrate-dropdown">.*<button class="select-toggle" aria-controls="voice-options"> *\n*$', r'', line, flags=re.I)
+    line = re.sub(r'^ *<a class="domain reader-domain".*> *\n*$', r'', line, flags=re.I)
+    
+    line = re.sub(r'<\/*span>', r'', line, flags=re.I)
     
     # Code:
     line = re.sub(r'<\/*code[^>]*>', r'~', line, flags=re.I)
     line = re.sub(r'<\/*kbd[^>]*>', r'~', line, flags=re.I)
     line = re.sub(r'<\/*samp[^>]*>', r'~', line, flags=re.I)
     line = re.sub(r'<\/*var[^>]*>', r'~', line, flags=re.I)
-    # line = re.sub(r'\n* *<pre[^>]*> *\n*', r'\n#+begin_src\n', line, flags=re.I)
-    # line = re.sub(r'\n* *<\/pre[^>]*> *\n*', r'\n#+end_src\n', line, flags=re.I)
-    line = re.sub(r'<pre>', r'#+begin_src', line, flags=re.I)
+    line = re.sub(r' *<pre[^>]*> *\n*', r'#+begin_src text\n', line, flags=re.I)
+    line = re.sub(r' *<\/pre[^>]*> *\n*', r'#+end_src\n', line, flags=re.I)
+    line = re.sub(r'<pre>', r'#+begin_src text', line, flags=re.I)
     line = re.sub(r'<\/pre>', r'#+end_src', line, flags=re.I)
     
     
     # Symbols:
     line = re.sub(r'&#169;', r'(c)', line, flags=re.I)  # Copyright
+    line = re.sub(r'&lt;',   r'<',   line, flags=re.I)
+    line = re.sub(r'&gt;',   r'>',   line, flags=re.I)
+    line = re.sub(r'&amp;',  r'&',   line, flags=re.I)
     
     
     # Footer (pocket):
@@ -256,6 +264,8 @@ def line_html_to_orgmode(line):
     
     # Links and anchors:
     line = re.sub(r' *target="[^"]*" *', r'', line, flags=re.I)
+    line = re.sub(r'<a href="([^"]*)" title="[^"]*">¶</a>', r'', line, flags=re.I)
+    line = re.sub(r'<a href="([^"]*)" title="[^"]*">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
     line = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
     line = re.sub(r'<a name="[^"]*">([^<]*)</a>', r'\1', line, flags=re.I)
     
@@ -266,6 +276,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'\n* *<p></p> *\n*', r'\n\n', line, flags=re.I)
     line = re.sub(r'\n* *</p><p> *\n*', r'\n\n', line, flags=re.I)
     line = re.sub(r'\n* *<p id="[0-9]*"> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r'\n* *<p id="[^"]*"> *\n*', r'\n\n', line, flags=re.I)
     line = re.sub(r'\n* *</*p> *\n*', r'\n\n', line, flags=re.I)
     # line = re.sub(r'^ * *\n*$', r'', line, flags=re.I)
     
