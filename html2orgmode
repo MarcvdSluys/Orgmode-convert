@@ -125,9 +125,6 @@ def line_html_to_orgmode(line):
     """
     
     
-    # All lines starting with < and ending with corresponding >:
-    line = re.sub(r'^ *<[^>]*> *\n*$', r'', line, flags=re.I)
-    
     # Comment at top:
     line = re.sub(r'^.*This Source Code Form is subject to the terms of the Mozilla.*\n$', r'', line, flags=re.I)
     line = re.sub(r'^.*If a copy of the MPL was not distributed.*\n$', r'', line, flags=re.I)
@@ -150,6 +147,11 @@ def line_html_to_orgmode(line):
     line = re.sub(r'^ *<div[^>]*><\/div> *\n*$', r'', line, flags=re.I)
     
     # Text settings:
+    line = re.sub(r'<\/*b>', r'*', line, flags=re.I)
+    line = re.sub(r'<\/*i>', r'/', line, flags=re.I)
+    line = re.sub(r'<\/*u>', r'_', line, flags=re.I)
+    line = re.sub(r'<\/*font[^>]*>', r'', line, flags=re.I)
+    
     line = re.sub(r'^ *<button .*><\/button> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="font-type-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="color-scheme-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
@@ -162,6 +164,22 @@ def line_html_to_orgmode(line):
     line = re.sub(r'^ *<div class="options" id="voice-options" .*Save To Pocket</span></button></div> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<a class="domain reader-domain".*> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="reader-estimated-time".*>.*</div> *\n*$', r'', line, flags=re.I)
+    
+    
+    # Code:
+    line = re.sub(r'<\/*code[^>]*>', r'~', line, flags=re.I)
+    line = re.sub(r'<\/*kbd[^>]*>', r'~', line, flags=re.I)
+    line = re.sub(r'<\/*samp[^>]*>', r'~', line, flags=re.I)
+    line = re.sub(r'<\/*var[^>]*>', r'~', line, flags=re.I)
+    # line = re.sub(r'\n* *<pre[^>]*> *\n*', r'\n#+begin_src\n', line, flags=re.I)
+    # line = re.sub(r'\n* *<\/pre[^>]*> *\n*', r'\n#+end_src\n', line, flags=re.I)
+    line = re.sub(r'<pre>', r'#+begin_src', line, flags=re.I)
+    line = re.sub(r'<\/pre>', r'#+end_src', line, flags=re.I)
+    
+    
+    # Symbols:
+    line = re.sub(r'&#169;', r'(c)', line, flags=re.I)  # Copyright
+    
     
     # Footer (pocket):
     line = re.sub(r'^.*http[s]*://getpocket.com.*\n*$', r'', line, flags=re.I)
@@ -178,11 +196,18 @@ def line_html_to_orgmode(line):
         
     # Sections:
     line = re.sub(r'^ *<h1 class="reader-title">([^>]*)</h1> *\n*$', r'', line, flags=re.I)  # Same as title, delete
-    line = re.sub(r'\n* *<h2[^>]*>([^<]*)</h2> *\n*', r'\n* \1\n', line, flags=re.I)
-    line = re.sub(r'\n* *<h3[^>]*>([^<]*)</h3> *\n*', r'\n** \1\n', line, flags=re.I)
-    line = re.sub(r'\n* *<h4[^>]*>([^<]*)</h4> *\n*', r'\n*** \1\n', line, flags=re.I)
-    line = re.sub(r'\n* *<h5[^>]*>([^<]*)</h5> *\n*', r'\n**** \1\n', line, flags=re.I)
-    line = re.sub(r'\n* *<h6[^>]*>([^<]*)</h6> *\n*', r'\n***** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h1[^>]*>([^<]*)</h1> *\n*', r'\n* \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h2[^>]*>([^<]*)</h2> *\n*', r'\n** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h3[^>]*>([^<]*)</h3> *\n*', r'\n*** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h4[^>]*>([^<]*)</h4> *\n*', r'\n**** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h5[^>]*>([^<]*)</h5> *\n*', r'\n***** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h6[^>]*>([^<]*)</h6> *\n*', r'\n****** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h1[^>]*>(.*)</h1> *\n*', r'\n* \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h2[^>]*>(.*)</h2> *\n*', r'\n** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h3[^>]*>(.*)</h3> *\n*', r'\n*** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h4[^>]*>(.*)</h4> *\n*', r'\n**** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h5[^>]*>(.*)</h5> *\n*', r'\n***** \1\n', line, flags=re.I)
+    line = re.sub(r'\n* *<h6[^>]*>(.*)</h6> *\n*', r'\n****** \1\n', line, flags=re.I)
     
     # Figures and captions:
     # Doesn't work: multiline...  line = re.sub(r'^ *<div[^>]*><figure><div><div><picture><source media="[^"]*"><source media="[^"]*"><img alt="[^"]*" src="([^"]*)" class="moz-reader-block-img" moz-reader-center="true"></picture></div><p>([^<]*)</p></div><figcaption>([^<]*)</figcaption></figure></div>', r'\1  Caption: \3 (credit: \2)', line, flags=re.I)
@@ -210,17 +235,29 @@ def line_html_to_orgmode(line):
     line = re.sub(r'\n* *<li data-testid="carousel-slide"> *\n*', r'', line, flags=re.I)
     line = re.sub(r'\n* *</li> *\n*', r'', line, flags=re.I)
     # line = re.sub(r'\n* * *\n*', r'', line, flags=re.I)
-
+    
     # Sort out figures, captions and credits
     line = re.sub(r' *(\[\[file:[^]]*\]\]) *', r'\n\n\1', line, flags=re.I)  # On a new line
     line = re.sub(r'\n* *\(\(CREDIT: (.*)\)\) *\(\(CAPTION: (.*)\)\) *\n*', r'\nFigure: \2 (credit: \1)', line, flags=re.I)  # Swap caption and credit
     line = re.sub(r'\n* *\(\(CREDIT: (.*)\)\) *\n*', r'\n(figure credit: \1)', line, flags=re.I)  # No Caption
     line = re.sub(r'\n* *\(\(CAPTION: (.*)\)\) *\n*', r'\nFigure: \1', line, flags=re.I)  # No credit
     
+    # Lists:
+    line = re.sub(r'\n* *<\/*[dou]l[^>]*> *\n*', r'', line, flags=re.I)
+    line = re.sub(r'<li>(.*)<\/li> *', r'+ \1', line, flags=re.I)
+    line = re.sub(r'<li>', r'+ ', line, flags=re.I)
+    line = re.sub(r'<\/li> *', r'', line, flags=re.I)
+    line = re.sub(r'<dt>(.*)<\/dt> *\n*', r'+ \1', line, flags=re.I)
+    line = re.sub(r'<dt>', r'+ ', line, flags=re.I)
+    line = re.sub(r'<\/dt> *', r'', line, flags=re.I)
+    line = re.sub(r' *<dd>(.*)<\/dd> *', r' :: \1', line, flags=re.I)
+    line = re.sub(r' *<dd> *', r' :: ', line, flags=re.I)
+    line = re.sub(r'<\/dd> *\n*', r'', line, flags=re.I)
     
-    # Links:
+    # Links and anchors:
     line = re.sub(r' *target="[^"]*" *', r'', line, flags=re.I)
     line = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
+    line = re.sub(r'<a name="[^"]*">([^<]*)</a>', r'\1', line, flags=re.I)
     
     
     # Paragraphs (<.*p.*> is also matched above, the current block needs to go AFTER that):
@@ -231,6 +268,15 @@ def line_html_to_orgmode(line):
     line = re.sub(r'\n* *<p id="[0-9]*"> *\n*', r'\n\n', line, flags=re.I)
     line = re.sub(r'\n* *</*p> *\n*', r'\n\n', line, flags=re.I)
     # line = re.sub(r'^ * *\n*$', r'', line, flags=re.I)
+    
+    # Line breaks:
+    line = re.sub(r'^ *<br[^>]*> *(\n*)', r'\1', line, flags=re.I)
+    line = re.sub(r' *<br[^>]*> *(\n*)', r'\1', line, flags=re.I)
+    line = re.sub(r'^ *<br[^>]*> *', r'', line, flags=re.I)
+    line = re.sub(r' *<br[^>]*> *', r'\n', line, flags=re.I)
+    
+    # All lines starting with < and ending with corresponding >:
+    line = re.sub(r'^ *<[^>]*> *\n*$', r'', line, flags=re.I)
     
 
     return line
