@@ -152,6 +152,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'<\/*i>', r'/', line, flags=re.I)
     line = re.sub(r'<\/*u>', r'_', line, flags=re.I)
     line = re.sub(r'<\/*font[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r'<\/*cite>', r'', line, flags=re.I)
     
     line = re.sub(r'^ *<button .*><\/button> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="font-type-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
@@ -187,6 +188,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'&lt;',   r'<',   line, flags=re.I)
     line = re.sub(r'&gt;',   r'>',   line, flags=re.I)
     line = re.sub(r'&amp;',  r'&',   line, flags=re.I)
+    line = re.sub(r'’',      r"'",   line, flags=re.I)  # Single quote
     
     
     # Footer (pocket):
@@ -268,6 +270,9 @@ def line_html_to_orgmode(line):
     line = re.sub(r'<a href="([^"]*)" title="[^"]*">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
     line = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
     line = re.sub(r'<a name="[^"]*">([^<]*)</a>', r'\1', line, flags=re.I)
+    
+    line = re.sub(r'<a href="([^"]*)">', r'[[\1][', line, flags=re.I)  # Catch multiline leftovers
+    line = re.sub(r'</a>', r']]', line, flags=re.I)
     
     
     # Paragraphs (<.*p.*> is also matched above, the current block needs to go AFTER that):
