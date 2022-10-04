@@ -148,6 +148,7 @@ def line_html_to_orgmode(line):
     
     # Text settings:
     line = re.sub(r'<\/*b>', r'*', line, flags=re.I)
+    line = re.sub(r'<strong( dir="[^"]*")*( class="[^"]*")*( title="([^"]*)")*>(.*)<\/strong>', r'*\5[fn:: \4]', line, flags=re.I)
     line = re.sub(r'<\/*strong>', r'*', line, flags=re.I)
     line = re.sub(r'<\/*i>', r'/', line, flags=re.I)
     line = re.sub(r'<\/*u>', r'_', line, flags=re.I)
@@ -246,7 +247,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'\n* *</li> *\n*', r'', line, flags=re.I)
     # line = re.sub(r'\n* * *\n*', r'', line, flags=re.I)
     
-    # Sort out figures, captions and credits
+    # Sort out figures, captions and credits:
     line = re.sub(r' *(\[\[file:[^]]*\]\]) *', r'\n\n\1', line, flags=re.I)  # On a new line
     line = re.sub(r'\n* *\(\(CREDIT: (.*)\)\) *\(\(CAPTION: (.*)\)\) *\n*', r'\nFigure: \2 (credit: \1)', line, flags=re.I)  # Swap caption and credit
     line = re.sub(r'\n* *\(\(CREDIT: (.*)\)\) *\n*', r'\n(figure credit: \1)', line, flags=re.I)  # No Caption
@@ -254,35 +255,39 @@ def line_html_to_orgmode(line):
     
     # Lists:
     line = re.sub(r'\n* *<\/*[dou]l[^>]*> *\n*', r'', line, flags=re.I)
-    line = re.sub(r'<li>(.*)<\/li> *', r'+ \1', line, flags=re.I)
-    line = re.sub(r'<li>', r'+ ', line, flags=re.I)
+    line = re.sub(r'<li[^>]*>(.*)<\/li> *', r'+ \1', line, flags=re.I)
+    line = re.sub(r'<li[^>]*>', r'+ ', line, flags=re.I)
     line = re.sub(r'<\/li> *', r'', line, flags=re.I)
-    line = re.sub(r'<dt>(.*)<\/dt> *\n*', r'+ \1', line, flags=re.I)
-    line = re.sub(r'<dt>', r'+ ', line, flags=re.I)
+    line = re.sub(r'<dt[^>]*>(.*)<\/dt> *\n*', r'+ \1', line, flags=re.I)
+    line = re.sub(r'<dt[^>]*>', r'+ ', line, flags=re.I)
     line = re.sub(r'<\/dt> *', r'', line, flags=re.I)
-    line = re.sub(r' *<dd>(.*)<\/dd> *', r' :: \1', line, flags=re.I)
-    line = re.sub(r' *<dd> *', r' :: ', line, flags=re.I)
+    line = re.sub(r' *<dd[^>]*>(.*)<\/dd> *', r' :: \1', line, flags=re.I)
+    line = re.sub(r' *<dd[^>]*> *', r' :: ', line, flags=re.I)
     line = re.sub(r'<\/dd> *\n*', r'', line, flags=re.I)
+    
+    # Abbreviations:
+    line = re.sub(r' *<abbr (class="[^"]*")* title="([^"]*)" *>([^<]*)</abbr>', r'\3[fn:: \2]', line, flags=re.I)
     
     # Links and anchors:
     line = re.sub(r' *target="[^"]*" *', r'', line, flags=re.I)
-    line = re.sub(r'<a href="([^"]*)" title="[^"]*">¶</a>', r'', line, flags=re.I)
-    line = re.sub(r'<a href="([^"]*)" title="[^"]*">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
-    line = re.sub(r'<a href="([^"]*)">([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
-    line = re.sub(r'<a name="[^"]*">([^<]*)</a>', r'\1', line, flags=re.I)
+    line = re.sub(r'<a href="([^"]*)"( class="[^"]*")* title="[^"]*">¶</a>', r'', line, flags=re.I)
+    line = re.sub(r'<a href="([^"]*)"( class="[^"]*")* title="[^"]*">([^<]*)</a>', r'[[\1][\3]]', line, flags=re.I)
+    line = re.sub(r'<a href="([^"]*)"( class="[^"]*")* *>([^<]*)</a>', r'[[\1][\2]]', line, flags=re.I)
+    line = re.sub(r'<a name="[^"]*"( class="[^"]*")*>([^<]*)</a>', r'\2', line, flags=re.I)
     
     line = re.sub(r'<a href="([^"]*)">', r'[[\1][', line, flags=re.I)  # Catch multiline leftovers
     line = re.sub(r'</a>', r']]', line, flags=re.I)
     
     
     # Paragraphs (<.*p.*> is also matched above, the current block needs to go AFTER that):
-    line = re.sub(r'\n* *<p aria-hidden="[^"]*">[^<]*</p> *\n*', r'\n\n', line, flags=re.I)  # Duplicate of figure caption? - Not sure what this is
-    line = re.sub(r'\n* *</p><p id="[0-9]*"> *\n*', r'\n\n', line, flags=re.I)
-    line = re.sub(r'\n* *<p></p> *\n*', r'\n\n', line, flags=re.I)
-    line = re.sub(r'\n* *</p><p> *\n*', r'\n\n', line, flags=re.I)
-    line = re.sub(r'\n* *<p id="[0-9]*"> *\n*', r'\n\n', line, flags=re.I)
-    line = re.sub(r'\n* *<p id="[^"]*"> *\n*', r'\n\n', line, flags=re.I)
-    line = re.sub(r'\n* *</*p> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *<p aria-hidden="[^"]*">[^<]*</p> *\n*', r'\n\n', line, flags=re.I)  # Duplicate of figure caption? - Not sure what this is
+    line = re.sub(r' *</p><p id="[0-9]*"> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *<p></p> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *</p><p> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *<p id="[0-9]*"> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *<p id="[^"]*"> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *<p[^>]*> *\n*', r'\n\n', line, flags=re.I)
+    line = re.sub(r' *</*p> *\n*', r'\n\n', line, flags=re.I)
     # line = re.sub(r'^ * *\n*$', r'', line, flags=re.I)
     
     # Line breaks:
@@ -290,6 +295,11 @@ def line_html_to_orgmode(line):
     line = re.sub(r' *<br[^>]*> *(\n*)', r'\1', line, flags=re.I)
     line = re.sub(r'^ *<br[^>]*> *', r'', line, flags=re.I)
     line = re.sub(r' *<br[^>]*> *', r'\n', line, flags=re.I)
+    
+    # Leftover <span class=""></span>:
+    line = re.sub(r'( *)<span( dir="[^"]*")*( class="[^"]*")*>([^<]*)</span>( *)\n*', r'\1\4\5', line, flags=re.I)
+    line = re.sub(r' *<span[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r' *</span> *\n*', r'', line, flags=re.I)
     
     # All lines starting with < and ending with corresponding >:
     line = re.sub(r'^ *<[^>]*> *\n*$', r'', line, flags=re.I)
