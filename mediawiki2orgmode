@@ -223,14 +223,14 @@ def single_line_mediawiki_to_orgmode(line):
     
     # Convert Mediawiki tables:
     line = re.sub(r'^{\| *(class="[^"]*")*[^|]*\|', r' |------|\n', line)
-    line = re.sub(r'^\|- *', r' |------|\n', line, flags=re.I)
-    line = re.sub(r'^\|} *', r' |------|\n', line, flags=re.I)
+    line = re.sub(r'^\|- *', r' |------|\n', line)
+    line = re.sub(r'^\|} *', r' |------|\n', line)
     
     line = re.sub(r'{{diagonal split header\|([^|]*)\|([^}]*)}}', ' | \\1 / \\2 ', line)  # Split first-colum table header
-    line = re.sub(r'style="[^"]*"', '', line, flags=re.I)
-    line = re.sub(r'class="[^"]*"', '', line, flags=re.I)
-    line = re.sub(r'colspan="[^"]*" *\|*', '', line, flags=re.I)
-    line = re.sub(r'rowspan="[^"]*" *\|*', '', line, flags=re.I)
+    line = re.sub(r'style="[^"]*"', '', line)
+    line = re.sub(r'class="[^"]*"', '', line)
+    line = re.sub(r'colspan="[^"]*" *\|*', '', line)
+    line = re.sub(r'rowspan="[^"]*" *\|*', '', line)
     
     
     # line = re.sub(r'', r'', line)
