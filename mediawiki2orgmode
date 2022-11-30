@@ -124,6 +124,11 @@ def multiline_mediawiki_to_orgmode(lines):
     # A table cell takes a whole line in Mediawiki, but only part of a line in Orgmode
     lines = re.sub(r'\n[|!] ', r' | ', lines)
     
+    # Fix <math>\begin{align}, \end{align}</math>:
+    lines = re.sub(r':*<math>\n* *\\begin{align}', r'\\begin{align}', lines)
+    lines = re.sub(r'\\end{align}\n* *</math>', r'\\end{align}', lines)
+
+
     return lines
 
     
@@ -217,9 +222,9 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r' *<\/*tr> *', r'', line)
     
     # Convert Mediawiki tables:
-    line = re.sub(r'^\{\| *(class="[^"]*")*[^|]*\|', r' |------|\n', line)
+    line = re.sub(r'^{\| *(class="[^"]*")*[^|]*\|', r' |------|\n', line)
     line = re.sub(r'^\|- *', r' |------|\n', line, flags=re.I)
-    line = re.sub(r'^\|\} *', r' |------|\n', line, flags=re.I)
+    line = re.sub(r'^\|} *', r' |------|\n', line, flags=re.I)
     
     line = re.sub(r'style="[^"]*"', '', line, flags=re.I)
     line = re.sub(r'class="[^"]*"', '', line, flags=re.I)
@@ -269,7 +274,7 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'<\/PRE>', r'#+end_src', line)
     line = re.sub(r'<\/pre>', r'#+end_src', line)
     line = re.sub(r'<\/*small>', r'', line)
-    line = re.sub(r'<math>', r'\\[', line)
+    line = re.sub(r':*<math>', r'\\[', line)
     line = re.sub(r'<\/math>', r'\\]', line)
     line = re.sub(r'<b> *', r'*', line)
     line = re.sub(r' *<\/b>', r'*', line)
@@ -499,11 +504,8 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'\&gt;', r'>', line)
     
     
-    # ":<math>" seems to occur on Wikipedia - remove colon:
-    line = re.sub(r':\\\[', r'\\[', line)
-    
     # Remove internal links:
-    line = re.sub(r'\[\[[^]\|]*\|([^]]*)\]\]', r'\1', line)  # Must excape | in match string!
+    line = re.sub(r'\[\[[^]\|]*\|([^]]*)\]\]', r'\1', line)
     line = re.sub(r'\[\[([^]]*)\]\]',         r'\1', line)
     
     # Turn references into footnotes:
