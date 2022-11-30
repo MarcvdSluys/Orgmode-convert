@@ -57,6 +57,7 @@ def get_arguments():
         outfile = str(args.infile)
         outfile = re.sub(r'\.xml', r'.org', outfile)        # Replace extension .xml with .org
         outfile = re.sub(r'\.mw', r'.org', outfile)         # Replace extension .mw with .org
+        outfile = re.sub(r'\.wiki', r'.org', outfile)       # Replace extension .wiki with .org
         outfile = re.sub(r'\.mediawiki', r'.org', outfile)  # Replace extension .mediawiki with .org
         
         outfile = outfile+'.org'                            # In case nothing happened above, append .org
@@ -92,28 +93,41 @@ def file_mediawiki_to_orgmode(infile, outfile,verbosity):
     # ofl.write('# #+startup: latexpreview  # Note: this may take a looong time when uncommented...\n')
     
     iline = 0
-    with open(infile, 'r') as lines:
-        try:
-            while True:
-                iline += 1
+    ifd = open(infile,'r')
+    
+    lines = ifd.read()  # Returns lines as a single string, including '\n'
+    lines = multiline_mediawiki_to_orgmode(lines)  # Edit all lines, including \n, as a single string
+    lines = lines.split('\n')  # Split the single line into an array of lines, REMOVING ALL LINE ENDINGS!
+    
+    for line in lines:
+        iline += 1
         
-                # Read data line and extract column contents:
-                # line = ifl.readline()
-                line = next(lines)
-                
-                line = line_mediawiki_to_orgmode(line)
-                # line = line_latex_to_orgmode(line)
-                
-                ofl.write('%s' % (line))
-                # print(iline, line)
-        except StopIteration:
-            if verbosity>0: print(str(iline)+' lines processed.')
-            exit
+        line += '\n'  # Restore the original line ending
+        line = single_line_mediawiki_to_orgmode(line)
+        
+        ofl.write('%s' % (line))
+        # print(iline, line)
     
     return
 
 
-def line_mediawiki_to_orgmode(line):
+def multiline_mediawiki_to_orgmode(lines):
+    """Convert a string with lines of Mediawiki code and \n to Orgmode.
+    
+    Parameters:
+      lines (str):  The lines containing Mediawiki code.
+    
+    Returns:
+      (str):  The lines containing Orgmode code.
+    """
+    
+    # A table cell takes a whole line in Mediawiki, but only part of a line in Orgmode
+    lines = re.sub(r'\n[|!] ', r' | ', lines)
+    
+    return lines
+
+    
+def single_line_mediawiki_to_orgmode(line):
     """Convert a line of Mediawiki code to Orgmode.
 
     Parameters:  
@@ -196,6 +210,19 @@ def line_mediawiki_to_orgmode(line):
     line = re.sub(r' *<\/td> *<td> *', r' | ', line)
     line = re.sub(r' *<\/*td> *', r' | ', line)
     line = re.sub(r' *<\/*tr> *', r'', line)
+    
+    # Convert Mediawiki tables:
+    line = re.sub(r'^\{\| *(class="[^"]*")*[^|]*\|', r' |------|\n', line)
+    line = re.sub(r'^\|- *', r' |------|\n', line, flags=re.I)
+    line = re.sub(r'^\|\} *', r' |------|\n', line, flags=re.I)
+    
+    line = re.sub(r'style="[^"]*"', '', line, flags=re.I)
+    line = re.sub(r'class="[^"]*"', '', line, flags=re.I)
+    line = re.sub(r'diagonal *split *header *\|*', ' ', line, flags=re.I)
+    line = re.sub(r'\|* *Actual *\|*', ' | ', line, flags=re.I)
+    line = re.sub(r'colspan="[^"]*" *\|*', '', line, flags=re.I)
+    line = re.sub(r'rowspan="[^"]*" *\|*', '', line, flags=re.I)
+    
     
     # line = re.sub(r'', r'', line)
     # line = re.sub(r' *&lt;tr align=&quot;center&quot;&gt; *&lt;td&gt; *', r'| ', line)
