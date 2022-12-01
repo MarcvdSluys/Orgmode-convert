@@ -127,8 +127,23 @@ def multiline_mediawiki_to_orgmode(lines):
     # Fix <math>\begin{align}, \end{align}</math>:
     lines = re.sub(r':*<math>\n* *\\begin{align}', r'\\begin{align}', lines)
     lines = re.sub(r'\\end{align}\n* *</math>', r'\\end{align}', lines)
-
-
+    
+    # <math></math> blocks, i.e. WITH a preceding and a trailing blank line:
+    lines = re.sub(r'\n\n:*<math>', r'\n\n\\[', lines)
+    lines = re.sub(r'\n:<math>', r'\n\n\\[', lines)
+    lines = re.sub(r'<\/math>\n\n', r'\\]\n\n', lines)
+    
+    lines = re.sub(r'\n\n:*&lt;math&gt;', r'\n\n\\[', lines)
+    lines = re.sub(r'\n:&lt;math&gt;', r'\n\n\\[', lines)
+    lines = re.sub(r'&lt;\/math&gt;\n\n', r'\\]\n\n', lines)
+    
+    # Inline <math></math>, i.e. WITHOUT a preceding or a trailing blank line:
+    lines = re.sub(r'\n*:*<math>\n*', r' $', lines)
+    lines = re.sub(r'\n* *<\/math>\n*', r'$ ', lines)
+    
+    lines = re.sub(r'\n*:*&lt;math&gt;\n*', r' $', lines)
+    lines = re.sub(r'\n* *&lt;\/math&gt;\n*', r'$ ', lines)
+    
     return lines
 
     
@@ -232,6 +247,9 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'colspan="[^"]*" *\|*', '', line)
     line = re.sub(r'rowspan="[^"]*" *\|*', '', line)
     
+    # Convert preformatted/code lines:
+    line = re.sub(r'^: *', '  : ', line)  # In orgmode, spaces MAY preceed and one space MUST follow the colon.
+    
     
     # line = re.sub(r'', r'', line)
     # line = re.sub(r' *&lt;tr align=&quot;center&quot;&gt; *&lt;td&gt; *', r'| ', line)
@@ -261,8 +279,6 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'&lt;\/PRE&gt;', r'#+end_src', line)
     line = re.sub(r'&lt;\/pre&gt;', r'#+end_src', line)
     line = re.sub(r'&lt;\/*small&gt;', r'', line)
-    line = re.sub(r'\&lt;math\&gt;', r'\\[', line)
-    line = re.sub(r'\&lt;\/math\&gt;', r'\\]', line)
     line = re.sub(r'&lt;b&gt; *', r'*', line)
     line = re.sub(r' *&lt;\/b&gt;', r'*', line)
     line = re.sub(r'&lt;br&gt;', r'', line)
@@ -273,8 +289,6 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'<\/PRE>', r'#+end_src', line)
     line = re.sub(r'<\/pre>', r'#+end_src', line)
     line = re.sub(r'<\/*small>', r'', line)
-    line = re.sub(r':*<math>', r'\\[', line)
-    line = re.sub(r'<\/math>', r'\\]', line)
     line = re.sub(r'<b> *', r'*', line)
     line = re.sub(r' *<\/b>', r'*', line)
     line = re.sub(r'<br>', r'', line)
