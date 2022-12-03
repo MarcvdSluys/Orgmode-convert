@@ -107,7 +107,10 @@ def file_mediawiki_to_orgmode(infile, outfile,verbosity):
         
         ofl.write('%s' % (line))
         # print(iline, line)
-    
+        
+    if verbosity > 0:
+        print(iline, ' lines processed.')
+        
     return
 
 
@@ -123,6 +126,8 @@ def multiline_mediawiki_to_orgmode(lines):
     
     # A table cell takes a whole line in Mediawiki, but only part of a line in Orgmode
     lines = re.sub(r'\n[|!] ', r' | ', lines)
+    lines = re.sub(r'\n[|!]class="[^"]*" *\|*', r' | ', lines)
+    lines = re.sub(r'\n[|!]style="[^"]*" *\|*', r' | ', lines)
     
     # Fix <math>\begin{align}, \end{align}</math>:
     lines = re.sub(r':*<math>\n* *\\begin{align}', r'\\begin{align}', lines)
@@ -186,16 +191,18 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'^\*\*\*([^\*].*)$', r'    - \1', line)
     line = re.sub(r'^\*\*([^\*].*)$', r'  - \1', line)
     line = re.sub(r'^\*([^\*].*)$', r'+ \1', line)
+    
     line = re.sub(r'^##### ', r'            1. ', line)
     line = re.sub(r'^#### ', r'         1. ', line)
     line = re.sub(r'^### ', r'      1. ', line)
     line = re.sub(r'^## ', r'   1. ', line)
     line = re.sub(r'^# ', r'1) ', line)
+    
     line = re.sub(r'^=====([^=].*[^=])=====$', r'***** \1', line)
     line = re.sub(r'^====([^=].*[^=])====$', r'**** \1', line)
     line = re.sub(r'^===([^=].*[^=])===$', r'*** \1', line)
     line = re.sub(r'^==([^=].*[^=])==$', r'** \1', line)
-    line = re.sub(r'^=([^=].*[^=])=$', r'* \1', line)
+    line = re.sub(r'^=([^=].*[^=])=$', r'* \1', line)  # Note: Wikipedia starts at 2nd-level headers
     
     
     # Convert &amp; -> & first!
@@ -237,7 +244,7 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r' *<\/*tr> *', r'', line)
     
     # Convert Mediawiki tables:
-    line = re.sub(r'^{\| *(class="[^"]*")*[^|]*\|', r' |------|\n', line)
+    line = re.sub(r'^{\| *(class="[^"]*")*[^|]*\|*', r' |------|\n', line)
     line = re.sub(r'^\|- *', r' |------|\n', line)
     line = re.sub(r'^\|} *', r' |------|\n', line)
     
@@ -248,7 +255,11 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'rowspan="[^"]*" *\|*', '', line)
     
     # Convert preformatted/code lines:
-    line = re.sub(r'^: *', '  : ', line)  # In orgmode, spaces MAY preceed and one space MUST follow the colon.
+    line = re.sub(r'^: *', '  : ', line)            # In orgmode, spaces MAY preceed and one space MUST follow the colon.
+    line = re.sub(r' *<code> *', ' ~', line)        # Code must have whitespace before first ~
+    line = re.sub(r' *&lt;code&gt; *', ' ~', line)  # Code must have whitespace before first ~
+    line = re.sub(r' *</code>', '~', line)
+    line = re.sub(r' *&lt;/code&gt;', '~', line)
     
     
     # line = re.sub(r'', r'', line)
