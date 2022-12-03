@@ -252,11 +252,10 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'rowspan="[^"]*" *\|*', '', line)
     
     # Convert preformatted/code lines:
-    line = re.sub(r'^: *', '  : ', line)            # In orgmode, spaces MAY preceed and one space MUST follow the colon.
-    line = re.sub(r' *<code> *', ' ~', line)        # Code must have whitespace before first ~
-    line = re.sub(r' *&lt;code&gt; *', ' ~', line)  # Code must have whitespace before first ~
+    line = re.sub(r'^: *', '  : ', line)                 # In orgmode, spaces MAY preceed and one space MUST follow the colon.
+    line = re.sub(r'&lt;([/]*code)&gt;', r'<\1>', line)  # &lt;(/)code&gt; -> <(/)code>
+    line = re.sub(r' *<code> *', ' ~', line)             # Code must have whitespace before first ~
     line = re.sub(r' *</code>', '~', line)
-    line = re.sub(r' *&lt;/code&gt;', '~', line)
     
     
     # line = re.sub(r'', r'', line)
