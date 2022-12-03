@@ -133,18 +133,21 @@ def multiline_mediawiki_to_orgmode(lines):
     # All <(/)math> is equal:
     lines = re.sub(r'&lt;([/]*math)&gt;', r'<\1>', lines)  # &lt;(/)math&gt; -> <(/)math>
     
+    # Inline <math></math>, i.e. WITHOUT a preceding or a trailing blank line:
+    lines = re.sub(r' *<math> *\n? *([^\n]*?) *\n? *<\/math> *', r' $\1$ ', lines)  # Non-greedy!
+    
     # Fix <math>\begin{align}, \end{align}</math>:
     lines = re.sub(r':*<math>\n* *\\begin{align}', r'\\begin{align}', lines)
     lines = re.sub(r'\\end{align}\n* *</math>', r'\\end{align}', lines)
     
     # <math></math> blocks, i.e. WITH a preceding and a trailing blank line:
-    lines = re.sub(r'\n\n:*<math>', r'\n\n\\[', lines)
-    lines = re.sub(r'\n:<math>', r'\n\n\\[', lines)
-    lines = re.sub(r'<\/math>\n\n', r'\\]\n\n', lines)
+    lines = re.sub(r'\n\n:*<math> *', r'\n\n\\[ ', lines)
+    lines = re.sub(r'\n*:<math> *', r'\n\n\\[ ', lines)
+    lines = re.sub(r'<\/math> *\n *\n', r' \\]\n\n', lines)
     
-    # Inline <math></math>, i.e. WITHOUT a preceding or a trailing blank line:
-    lines = re.sub(r'\n*:*<math>\n*', r' $', lines)
-    lines = re.sub(r'\n* *<\/math>\n*', r'$ ', lines)
+    # Leftover <math> from weird constructs:
+    lines = re.sub(r'(\n*) *<math> *(\n*)', r'\1\\[ \2', lines)
+    lines = re.sub(r'(\n*) *<\/math> *(\n*)', r'\1 \\]\2', lines)
     
     return lines
 
