@@ -19,6 +19,14 @@ import re
 def main():
     """Main function."""
     
+    # line = "One of the many applications of Bayes' theorem is Bayesian inference, a particular approach to statistical inference. When applied, the probabilities involved in the theorem may have different probability interpretations. With Bayesian probability interpretation, the theorem expresses how a degree of belief, expressed as a probability, should rationally change to account for the availability of related evidence. Bayesian inference is fundamental to Bayesian statistics, being considered ''to the theory of probability what Pythagoras's theorem is to geometry.''  One of the many applications of Bayes' theorem is Bayesian inference, a particular approach to statistical inference. When applied, the probabilities involved in the theorem may have different probability interpretations. With Bayesian probability interpretation, the theorem expresses how a degree of belief, expressed as a probability, should rationally change to account for the availability of related evidence. Bayesian inference is fundamental to Bayesian statistics, being considered ''to the theory of probability what Pythagoras's theorem is to geometry.''"
+    # line = "OneOfTheManyApplicationsOfBayes'TheoremIsBayesianInference,AParticularApproachToStatisticalInference.WhenApplied,TheProbabilities involved in the theorem may have different probability interpretations. With Bayesian probability interpretation, the theorem expresses how a degree of belief, expressedasaprobability,shouldrationallychangetoaccountforthe availability of related evidence. Bayesian inference is fundamental to Bayesian statistics,beingconsidered''tothetheoryofprobabilitywhatPythagoras'stheorem is to geometry.''"
+    # line = wrap_line(line, 30)
+    # print()
+    # print(line)
+    # print()
+    # exit(0)
+    
     args = get_cli_arguments()
     file_mediawiki_to_orgmode(args)
     
@@ -101,6 +109,12 @@ def file_mediawiki_to_orgmode(args):
         line += '\n'  # Restore the original line ending
         line = single_line_mediawiki_to_orgmode(args, line)
         
+        # Wrap lines, but not if they are part of a table or block equation:
+        # NOTE: Orgmode tables can be a single line with '|------| *\n| ...'.
+        # if ('|' not in line) and ('\\[' not in line):
+        if (re.match(r' *\|[ -]', line) is None) and (r'\\\[' not in line):
+            line = wrap_line(line, 110)
+            
         ofl.write('%s' % (line))
         # print(iline, line)
         
@@ -551,6 +565,49 @@ def single_line_mediawiki_to_orgmode(args, line):
     return line
 
 
+def wrap_line(line, wlen, indent=2):
+    """Wrap a line at the last space before a specified length.
+    
+    Parameters:
+      line (str):    Line to wrap.
+      wlen (int):    Maximum line length to wrap at.
+      indent (int):  Indentation of the continuation line
+    
+    Returns:
+      (str):  The line with extra '\n' characters.
+    """
+    
+    llen = len(line)
+    # print(llen,wlen,line)
+    
+    # No need to break:
+    if wlen >= llen: return line
+    
+    i0 = 0     # Base position
+    il = wlen  # Move between i0 and i0+wlen
+    dl = -1    # Move backwards by default
+    wraps = 0
+    
+    while True:
+        # print(i0+il,llen)
+        if line[i0+il]==' ':
+            wraps += 1
+            line = line[0:i0+il]+'\n'+' '*indent+line[i0+il+1:]  # Remove the space and add an indentation of <indent> spaces
+            i0 = i0+il+indent
+            il = wlen
+            # print()
+            # print(wraps,wlen,llen,wraps*wlen,len(line),il,i0+il, line)
+            if i0+il >= len(line): break
+            dl = -1  # Search backward by default
+            continue
+        il += dl
+        if i0+il > llen: break
+        # print('i0,il,i0+il,dl:" ', i0,il,i0+il,dl)
+        if il==indent-1:
+            i0 += wlen
+            dl = +1  # Start searching forward
+            continue
+    return line
 
 
 if __name__ == '__main__':
