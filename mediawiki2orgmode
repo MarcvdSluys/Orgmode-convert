@@ -19,20 +19,19 @@ import re
 def main():
     """Main function."""
     
-    infile,outfile,verbosity = get_arguments()
-    file_mediawiki_to_orgmode(infile, outfile, verbosity)
+    args = get_cli_arguments()
+    file_mediawiki_to_orgmode(args)
     
     exit(0)
 
 
-def get_arguments():
-    """Get CLI arguments.
+def get_cli_arguments():
+    """Get command-line arguments.
     
     Parameters:
     
     Returns:
-      (str):  Input file name.
-      (str):  Output file name.
+      (args):  Struct containing command-line arguments.
     """
     
     import argparse
@@ -47,8 +46,9 @@ def get_arguments():
     parser.add_argument("infile",            type=str, default=None, help="name of the input Mediawiki file (file.xml/.mw/.mediawiki)")
     parser.add_argument("-o", "--outfile",   type=str, default=None, help="name of the output Orgmode file (file.org)")
     
-    parser.add_argument("-v", "--verbosity", action="count", default=1, help="increase output verbosity")  # Counts number of occurrences
-    parser.add_argument("-q", "--quiet",     action="store_true", help="suppress output")  # Default = False
+    parser.add_argument("-v", "--verbosity",      action="count", default=1, help="increase output verbosity")  # Counts number of occurrences
+    parser.add_argument("-H", "--header-start-2", action="store_true", help="set the Mediawiki starting header level to 2.  E.g. Wikipedia uses ==Header==, which is then translated to * Header instead of ** Header.")  # Default = False
+    parser.add_argument("-q", "--quiet",          action="store_true", help="suppress output")  # Default = False
     
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -62,38 +62,34 @@ def get_arguments():
         
         outfile = outfile+'.org'                            # In case nothing happened above, append .org
         outfile = re.sub(r'\.org\.org', r'.org', outfile)   # In case we have a double extension, remove one
-    else:
-        outfile = args.outfile
+        args.outfile = outfile
         
-    if args.infile == outfile:
+    if args.infile == args.outfile:
         sys.stderr.write('Input and output file have the same name: '+outfile+'\n')
     
-    verbosity = args.verbosity
-    if args.quiet: verbosity=0  # No output
+    if args.quiet: args.verbosity=0  # No output
     
-    if verbosity>0:
+    if args.verbosity>0:
         print('Input file:  '+args.infile)
-        print('Output file: '+outfile)
+        print('Output file: '+args.outfile)
         # print('Verbosity:   '+str(verbosity))
     
-    return args.infile, outfile, verbosity
+    return args
 
 
-def file_mediawiki_to_orgmode(infile, outfile,verbosity):
+def file_mediawiki_to_orgmode(args):
     """Covert lines of text from Mediawiki format to Orgmode format.
     
     Parameters:
-      infile (str):     Name of the input file.
-      outfile (str):    Name of the output file.
-      verbosity (int):  Verbosity level (0=quiet).
+      args (struct):    Struct containing command-line arguments.
     """
     
     # Open the input and output files:
-    ofl = open(outfile,'w')
+    ofl = open(args.outfile,'w')
     # ofl.write('# #+startup: latexpreview  # Note: this may take a looong time when uncommented...\n')
     
     iline = 0
-    ifd = open(infile,'r')
+    ifd = open(args.infile,'r')
     
     lines = ifd.read()  # Returns lines as a single string, including '\n'
     lines = multiline_mediawiki_to_orgmode(lines)  # Edit all lines, including \n, as a single string
@@ -103,12 +99,12 @@ def file_mediawiki_to_orgmode(infile, outfile,verbosity):
         iline += 1
         
         line += '\n'  # Restore the original line ending
-        line = single_line_mediawiki_to_orgmode(line)
+        line = single_line_mediawiki_to_orgmode(args, line)
         
         ofl.write('%s' % (line))
         # print(iline, line)
         
-    if verbosity > 0:
+    if args.verbosity > 0:
         print(iline, ' lines processed.')
         
     return
@@ -152,7 +148,7 @@ def multiline_mediawiki_to_orgmode(lines):
     return lines
 
     
-def single_line_mediawiki_to_orgmode(line):
+def single_line_mediawiki_to_orgmode(args, line):
     """Convert a line of Mediawiki code to Orgmode.
 
     Parameters:  
@@ -198,12 +194,19 @@ def single_line_mediawiki_to_orgmode(line):
     line = re.sub(r'^## ', r'   1. ', line)
     line = re.sub(r'^# ', r'1) ', line)
     
-    line = re.sub(r'^=====([^=].*[^=])=====$', r'***** \1', line)
-    line = re.sub(r'^====([^=].*[^=])====$', r'**** \1', line)
-    line = re.sub(r'^===([^=].*[^=])===$', r'*** \1', line)
-    line = re.sub(r'^==([^=].*[^=])==$', r'** \1', line)
-    line = re.sub(r'^=([^=].*[^=])=$', r'* \1', line)  # Note: Wikipedia starts at 2nd-level headers
-    
+    if args.header_start_2:  # Mediawiki header levels start at 2 (i.e. ==Header== -> * Header)
+        line = re.sub(r'^======([^=].*[^=])======$', r'***** \1', line)
+        line = re.sub(r'^=====([^=].*[^=])=====$', r'**** \1', line)
+        line = re.sub(r'^====([^=].*[^=])====$', r'*** \1', line)
+        line = re.sub(r'^===([^=].*[^=])===$', r'** \1', line)
+        line = re.sub(r'^==([^=].*[^=])==$', r'* \1', line)
+    else:                  # Mediawiki header levels start at 1 (i.e. =Header= -> * Header)
+        line = re.sub(r'^=====([^=].*[^=])=====$', r'***** \1', line)
+        line = re.sub(r'^====([^=].*[^=])====$', r'**** \1', line)
+        line = re.sub(r'^===([^=].*[^=])===$', r'*** \1', line)
+        line = re.sub(r'^==([^=].*[^=])==$', r'** \1', line)
+        line = re.sub(r'^=([^=].*[^=])=$', r'* \1', line)
+        
     
     # Convert &amp; -> & first!
     line = re.sub(r'&amp;amp;',    r'&', line)
