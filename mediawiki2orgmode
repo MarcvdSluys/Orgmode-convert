@@ -136,7 +136,7 @@ def multiline_mediawiki_to_orgmode(lines):
     lines = re.sub(r'&lt;([/]*math)&gt;', r'<\1>', lines)  # &lt;(/)math&gt; -> <(/)math>
     
     # Fix <math>\begin{align}, \end{align}</math>:
-    lines = re.sub(r':*<math>\n* *\\begin{align}', r'\\begin{align}', lines)
+    lines = re.sub(r':* *<math>\n* *\\begin{align}', r'\\begin{align}', lines)
     lines = re.sub(r'\\end{align}\n* *</math>', r'\\end{align}', lines)
     
     # Start of :<math> blocks, i.e. WITH a preceding colon:
@@ -152,6 +152,10 @@ def multiline_mediawiki_to_orgmode(lines):
     # Leftover <math> from weird constructs:
     lines = re.sub(r'(\n*) *<math> *(\n*)', r'\1\\[ \2', lines)
     lines = re.sub(r'(\n*) *<\/math> *(\n*)', r'\1 \\]\2', lines)
+    
+    # \\ \n [Xpt] -> \\[Xpt] \n:
+    lines = re.sub(r'\\\\ *(\[[0-9]*\.+[0-9]*pt\])', r'\\\\\1', lines)
+    lines = re.sub(r'\\\\ *\n* *(\[[0-9]*\.*[0-9]*pt\])', r'\\\\\1\n', lines)
     
     return lines
 
@@ -221,9 +225,10 @@ def single_line_mediawiki_to_orgmode(args, line):
     line = re.sub(r'&amp;',        r'&', line)
     
     # Convert space, dash:
-    line = re.sub(r'&nbsp;',    r' ', line)
+    line = re.sub(r'&nbsp;',     r' ', line)
+    line = re.sub(r'&thinsp;',   r'', line)
     line = re.sub(r' *&mdash; ', r' --- ', line)
-    line = re.sub(r'&ndash;',   r'--', line)
+    line = re.sub(r'&ndash;',    r'--', line)
     
     
     # Convert HTML tables:
@@ -312,7 +317,8 @@ def single_line_mediawiki_to_orgmode(args, line):
     line = re.sub(r'<\/*small>', r'', line)
     line = re.sub(r'<b> *', r'*', line)
     line = re.sub(r' *<\/b>', r'*', line)
-    line = re.sub(r'<br>', r'', line)
+    line = re.sub(r'<br>', r' ', line)
+    line = re.sub(r'<br />', r' ', line)
     line = re.sub(r'^<div class=&quot;noautonum&quot;>__TOC__<\/div>\n$', r'', line)
     # line = re.sub(r'<TAG>', r'', line)
     # line = re.sub(r'<\/TAG>', r'', line)
@@ -553,6 +559,8 @@ def single_line_mediawiki_to_orgmode(args, line):
     line = re.sub(r'\[(https*:\/\/[^ ]*) ([^]][^]]*)\]', r'[[\1][\2]]', line)
     # line = re.sub(r'', r'', line)
     
+    # Non-ascii::
+    line = re.sub(r' ', r'', line)
     
     return line
 
