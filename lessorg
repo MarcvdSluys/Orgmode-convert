@@ -1,0 +1,111 @@
+#!/bin/bash
+
+##  lessorg:  uses less to display an orgmode file in the terminal with some basic syntax highlighting.
+##  2023-01-06, MvdS:  initial version.
+
+# Codes are automatically ended at EoL?  - no '\x1B[0m' needed???
+# Note: my default konsole text is already bold?
+
+NULL='\x1B[0m'          # Remove all colours
+BOLD='\x1B[1;38;5;11m'  # Bold: yellow
+ITAL='\x1B[3m'          # Italic: italic
+ULIN='\x1B[4m'          # Underlined: underlined
+STRK='\x1B[9m'          # Strikethrough: strikethrough
+
+H1='\x1B[38;5;87m'   # Light blue
+H2='\x1B[38;5;11m'   # Yellow
+H3='\x1B[38;5;14m'   # Cyan
+H4='\x1B[38;5;208m'  # Orange
+H5='\x1B[38;5;10m'   # Light green
+H6='\x1B[38;5;48m'   # Light blue-green
+H7='\x1B[38;5;254m'  # Light grey
+H8='\x1B[38;5;210m'  # Salmon pink.  Then H9=H1, etc.
+
+BLK='\x1B[38;5;208m'  # Block: Orange
+CMT='\x1B[38;5;208m'  # Comment: Orange
+
+CODE='\x1B[48;2;60;0;60m'  # CODE: Dark purple bg
+MATH='\x1B[48;2;60;0;60m'  # MATH: Dark purple bg
+
+LINK='\x1B[38;5;27m'       # Link text: blue
+URL='\x1B[38;5;14m'        # URL: cyan
+
+ENUM='\x1B[48;5;19m'       # Enumerate: blue bg
+TABL='\x1B[38;5;14m'       # Table: cyan
+
+
+file=`echo "$1.jot" | sed 's|\.jot\.jot|\.jot|g'`  # Add .jot, but remove duplicates
+
+# while IFS="" read -r p || [ -n "$p" ]
+# do
+#     printf '%s\n' "$p" \
+# 	| sed -e "/^ *#+begin_src /s|.*|${CODE}&|" \
+# 	      -e "/^ *#+end_src/s|.*|&${NULL}|" \
+# 	| sed -e "s|\(.* ::\)\( .*\)|${BOLD}\1${NULL}\2|"
+# done < ${HOME}/.jotter/$file | less -r
+# exit
+
+cat ${HOME}/.jotter/$file \
+    | sed \
+	  -e "/^\* /s|.*|${H1}&|" \
+	  -e "/^\*\* /s|.*|${H2}&|" \
+	  -e "/^\*\*\* /s|.*|${H3}&|" \
+	  -e "/^\*\*\*\* /s|.*|${H4}&|" \
+	  -e "/^\*\*\*\*\* /s|.*|${H5}&|" \
+	  -e "/^\*\*\*\*\*\* /s|.*|${H6}&|" \
+	  -e "/^\*\*\*\*\*\*\* /s|.*|${H7}&|" \
+	  -e "/^\*\*\*\*\*\*\*\* /s|.*|${H8}&|" \
+	  \
+    | sed \
+	  -e "/^ *#+begin_src /s|.*|${BLK}&|" \
+	  -e "/^ *#+end_src/s|.*|${BLK}&|" \
+    | sed \
+	  -e "s|\(.* \)\(# .*\)|\1${CMT}\2|" \
+	  -e "s|^ *#|${CMT}&|" \
+	  -e "s|^ *;;|${CMT}&|" \
+    | sed \
+	  -e "s:\(^\| \)\*\([^* ][^*]*[^* ]\)\*\( \|$\):\1${BOLD}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)\*\([^* ]\)\*\( \|$\):\1${BOLD}\2${NULL}\3:g" \
+	  \
+	  -e "s:\(^\| \)/\([^/ ][^/]*[^/ ]\)/\( \|$\):\1${ITAL}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)/\([^/ ]\)/\( \|$\):\1${ITAL}\2${NULL}\3:g" \
+	  \
+	  -e "s:\(^\| \)_\([^_ ][^_]*[^_ ]\)_\( \|$\):\1${ULIN}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)_\([^_ ]\)_\( \|$\):\1${ULIN}\2${NULL}\3:g" \
+	  \
+	  -e "s:\(^\| \)+\([^+ ][^+]*[^+ ]\)+\( \|$\):\1${STRK}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)+\([^+ ]\)+\( \|$\):\1${STRK}\2${NULL}\3:g" \
+	  \
+	  -e "s:\(^\| \)~\([^~ ][^~]*[^~ ]\)~\( \|$\):\1${CODE}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)~\([^~ ]\)~\( \|$\):\1${CODE}\2${NULL}\3:g" \
+	  \
+	  -e "s:\(^\| \)=\([^= ][^=]*[^= ]\)=\( \|$\):\1${CODE}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)=\([^= ]\)=\( \|$\):\1${CODE}\2${NULL}\3:g" \
+	  -e "s|^ *: \(.*\)|${CODE}  \1  ${NULL}|g" \
+	  \
+	  -e "s:\(^\|[ (]\)\$\([^$ ][^$]*[^$ ]\)\$\([ ,.?!:;)]\|$\):\1${MATH}\2${NULL}\3:g" \
+	  -e "s:\(^\| \)\$\([^$ ]\)\$\( \|$\):\1${MATH}\2${NULL}\3:g" \
+	  -e "/\(^\| \)\\\\\[\( .* \)\\\\\]\( \|$\)/ s:\(^\| \)\\\\\[\( [^]]* \)\\\\\]\( \|$\):\1${MATH} \2 ${NULL}\3:g; \
+	     s:~: :g; s: *\\\\\(cos\|sin\|tan\|arccos\|arcsin\|arctan\): \1:g; \
+	     s: *\\\\theta *: θ :g; s: *\\\\phi *: φ :g; s: *\\\\pi *: π :g; s: *\\\\rho *: ρ :g; \
+	     s: *\\\\frac{\([^}]*\)}{\([^}]*\)} *: (\1)/(\2) :g;" \
+    | sed \
+	  -e "s|^ *[+*-] .*|  &|g" \
+	  -e "s|^\( *\)\([0-9]*[.)]\)\( .*\)|  \1${ENUM}\2${NULL}\3|g" \
+	  -e "s|^\( *[+*-].* ::\)\( .*\)|${BOLD}\1${NULL}\2|" \
+    | sed \
+	  -e "/^ *|---/ s:[|+-]*:${TABL}&${NULL}:g" \
+	  -e "/^ *|/ s:|:${TABL}|${NULL}:g" \
+	  -e "s:^ *---*\( \|$\):${TABL}----------------------------------------------------------------------------------------------------${NULL}:g" \
+	  -e "s: *---*\( \|$\):\n${TABL}----------------------------------------------------------------------------------------------------${NULL}:g" \
+    | sed \
+	  -e "s|\[\[\(https*://[^] ]*\)\]\[\([^]]*\)\]\]|${LINK}\2: ${URL}\1${NULL}|g" \
+          -e "s|https*://[^] ]*|${URL}&${NULL}|g" \
+          -e "s|file:\([^ ][^ ]*\)|file: ${URL}\1${NULL}|g" \
+	  \
+    | less -i
+    # | sed "/^ *#+begin_src /s|.*|${BLK}&|" \
+
+exit
+	  -e "s:\(^\| \)\\\\\[\( [^]]* \)\\\\\]\( \|$\):\1${MATH} \2 ${NULL}\3:g" \
+
