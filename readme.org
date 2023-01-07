@@ -28,4 +28,8 @@ conversion to Orgmode.  In addition, I see no reason why the content of a wiki, 
 could not be converted as well.  Note that ~Attic/mediawiki2orgmode.sh~ contains the original Bash version,
 which may be similar but will no longer be developed.
 
+* lessorg
+Not really a conversion script /to/ Orgmode, but a script that uses less to display an Orgmode file for a quick
+glance in the terminal, with some basic syntax highlighting.  This makes it easier to see the structure of the
+file (e.g. through the coloured headlines) and read its contents.
 
