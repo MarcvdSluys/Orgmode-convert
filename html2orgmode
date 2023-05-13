@@ -139,7 +139,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'^ *<meta [^>]*> *\n*$', r'', line, flags=re.I)
     line = re.sub(r' *<link rel="stylesheet" [^>]*> *', r'', line, flags=re.I)
     line = re.sub(r' *<link rel="shortcut icon" [^>]*> *', r'', line, flags=re.I)
-    line = re.sub(r'^ *<title>(.*)<\/title> *', r'#+title: \1', line, flags=re.I)
+    line = re.sub(r'^ *<title[^>]*>(.*)<\/title> *', r'#+title: \1', line, flags=re.I)
     
     # Body:
     line = re.sub(r' *<body class=[^>]*> *', r'', line, flags=re.I)
@@ -151,6 +151,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'<strong( dir="[^"]*")*( class="[^"]*")*( title="([^"]*)")*>(.*)<\/strong>', r'*\5[fn:: \4]', line, flags=re.I)
     line = re.sub(r'<\/*strong>', r'*', line, flags=re.I)
     line = re.sub(r'<\/*i>', r'/', line, flags=re.I)
+    line = re.sub(r'<\/*em>', r'/', line, flags=re.I)
     line = re.sub(r'<\/*u>', r'_', line, flags=re.I)
     line = re.sub(r'<\/*font[^>]*>', r'', line, flags=re.I)
     line = re.sub(r'<\/*cite>', r'', line, flags=re.I)
@@ -162,6 +163,7 @@ def line_html_to_orgmode(line):
     
     line = re.sub(r'^ *<div class="options" id="voice-options" .*Save To Pocket</span></button></div> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="reader-estimated-time".*>.*</div> *\n*$', r'', line, flags=re.I)
+    line = re.sub(r'^ *<div class="credits reader-credits"[^>]*>', r'#+author: ', line, flags=re.I)
     
     line = re.sub(r'^ *<span class="font-size-value">.*</span> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<span class="content-width-value">.*</span> *\n*$', r'', line, flags=re.I)
@@ -186,10 +188,13 @@ def line_html_to_orgmode(line):
     
     # Symbols:
     line = re.sub(r'&#169;', r'(c)', line, flags=re.I)  # Copyright
-    line = re.sub(r'&lt;',   r'<',   line, flags=re.I)
-    line = re.sub(r'&gt;',   r'>',   line, flags=re.I)
-    line = re.sub(r'&amp;',  r'&',   line, flags=re.I)
+    line = re.sub(r'&lt;',   r'<',   line, flags=re.I)  # <
+    line = re.sub(r'&gt;',   r'>',   line, flags=re.I)  # >
+    line = re.sub(r'&amp;',  r'&',   line, flags=re.I)  # Ampersand
+    line = re.sub(r'&nbsp;', r' ',   line, flags=re.I)  # Space
     line = re.sub(r'’',      r"'",   line, flags=re.I)  # Single quote
+    line = re.sub(r'[“”]',   r'"',   line, flags=re.I)  # Double quote l/r
+    
     
     
     # Footer (pocket):
@@ -224,7 +229,11 @@ def line_html_to_orgmode(line):
     # Doesn't work: multiline...  line = re.sub(r'^ *<div[^>]*><figure><div><div><picture><source media="[^"]*"><source media="[^"]*"><img alt="[^"]*" src="([^"]*)" class="moz-reader-block-img" moz-reader-center="true"></picture></div><p>([^<]*)</p></div><figcaption>([^<]*)</figcaption></figure></div>', r'\1  Caption: \3 (credit: \2)', line, flags=re.I)
     line = re.sub(r' *src="([^"]*)" *', r'[[file:\1]] ', line, flags=re.I)
     line = re.sub(r'</picture></div><p>([^<]*)</p></div>', r' ((CREDIT: \1)) ', line, flags=re.I)  # Credit comes before caption; put it on a new line, swap below.
-    line = re.sub(r'<figcaption>([^<]*)</figcaption></figure></div>', r' ((CAPTION: \1)) ', line, flags=re.I)
+    line = re.sub(r'<figcaption[^>]*>([^<]*)</figcaption></figure></div>', r' ((CAPTION: \1)) ', line, flags=re.I)
+    line = re.sub(r'<figcaption[^>]*>', r' ((CAPTION: ', line, flags=re.I)
+    line = re.sub(r'</figcaption></figure></div>', r' )) ', line, flags=re.I)
+    line = re.sub(r'</figcaption></figure>', r' )) ', line, flags=re.I)
+    line = re.sub(r'</figcaption>', r' )) ', line, flags=re.I)
     line = re.sub(r'\n* *</*div> *\n*', r'', line, flags=re.I)
     line = re.sub(r'\n* *</*figure> *\n*', r'', line, flags=re.I)
     line = re.sub(r'\n* *</*picture> *\n*', r'', line, flags=re.I)
@@ -296,15 +305,32 @@ def line_html_to_orgmode(line):
     line = re.sub(r'^ *<br[^>]*> *', r'', line, flags=re.I)
     line = re.sub(r' *<br[^>]*> *', r'\n', line, flags=re.I)
     
+    # Horizontal rules (>=5 dashes):
+    line = re.sub(r'^ *<hr[^>]*> *(\n*)', r'----------------------------------------------------------------------------------------------------\1', line, flags=re.I)
+    line = re.sub(r'^ *<hr[^>]*> *', r'----------------------------------------------------------------------------------------------------', line, flags=re.I)
+    line = re.sub(r'^<hr[^>]*>$', r'----------------------------------------------------------------------------------------------------', line, flags=re.I)
+    line = re.sub(r'<hr[^>]*>', r'----------------------------------------------------------------------------------------------------', line, flags=re.I)
+    
+    
     # Leftover <span class=""></span>:
     line = re.sub(r'( *)<span( dir="[^"]*")*( class="[^"]*")*>([^<]*)</span>( *)\n*', r'\1\4\5', line, flags=re.I)
     line = re.sub(r' *<span[^>]*>', r'', line, flags=re.I)
     line = re.sub(r' *</span> *\n*', r'', line, flags=re.I)
+
+    # Leftover <div>s:
+    line = re.sub(r'<div[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r'<\/div>', r'', line, flags=re.I)
+
     
     # All lines starting with < and ending with corresponding >:
     line = re.sub(r'^ *<[^>]*> *\n*$', r'', line, flags=re.I)
     
-
+    # Some Firefox Read view leftovers:
+    line = re.sub(r'^ *\+ *$', r'', line, flags=re.I)
+    line = re.sub(r"^ *Pocket provides a quiet, calm space that's perfect for reading. It *$", r'', line, flags=re.I)
+    line = re.sub(r"to privacy you've come to expect from Firefox and Mozilla.", r'', line, flags=re.I)
+    line = re.sub(r'^ *$', r'', line, flags=re.I)
+    
     return line
 
 
