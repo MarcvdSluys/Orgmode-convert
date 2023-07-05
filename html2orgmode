@@ -161,7 +161,7 @@ def line_html_to_orgmode(line):
     line = re.sub(r'<\/*font[^>]*>', r'', line, flags=re.I)
     line = re.sub(r'<\/*cite>', r'', line, flags=re.I)
     
-    line = re.sub(r'^ *<button .*><\/button> *\n*$', r'', line, flags=re.I)
+    line = re.sub(r' *<button[^>]*>.*</button> *\n*', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="font-type-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *<div class="color-scheme-buttons radiorow">.*</label></div> *\n*$', r'', line, flags=re.I)
     line = re.sub(r'^ *</button></div> *\n*$', r'', line, flags=re.I)
@@ -192,13 +192,15 @@ def line_html_to_orgmode(line):
     
     
     # Symbols:
-    line = re.sub(r'&#169;', r'(c)', line, flags=re.I)  # Copyright
-    line = re.sub(r'&lt;',   r'<',   line, flags=re.I)  # <
-    line = re.sub(r'&gt;',   r'>',   line, flags=re.I)  # >
-    line = re.sub(r'&amp;',  r'&',   line, flags=re.I)  # Ampersand
-    line = re.sub(r'&nbsp;', r' ',   line, flags=re.I)  # Space
-    line = re.sub(r'’',      r"'",   line, flags=re.I)  # Single quote
-    line = re.sub(r'[“”]',   r'"',   line, flags=re.I)  # Double quote l/r
+    line = re.sub(r'&#169;', r'(c)',  line, flags=re.I)  # Copyright
+    line = re.sub(r'&lt;',   r'<',    line, flags=re.I)  # <
+    line = re.sub(r'&gt;',   r'>',    line, flags=re.I)  # >
+    line = re.sub(r'&amp;',  r'&',    line, flags=re.I)  # Ampersand
+    line = re.sub(r'&nbsp;', r' ',    line, flags=re.I)  # Space
+    line = re.sub(r'’',      r"'",    line, flags=re.I)  # Single quote
+    line = re.sub(r'[“”]',   r'"',    line, flags=re.I)  # Double quote l/r
+    line = re.sub(r'Å',      r'\\AA', line, flags=re.I)  # Angstroem - NOTE: \AA doesn't work in math mode, e.g. after adding converting to $\AA^{-1}$, fix later
+    
     
     
     
@@ -229,6 +231,32 @@ def line_html_to_orgmode(line):
     line = re.sub(r'\n* *<h4[^>]*>(.*)</h4> *\n*', r'\n**** \1\n', line, flags=re.I)
     line = re.sub(r'\n* *<h5[^>]*>(.*)</h5> *\n*', r'\n***** \1\n', line, flags=re.I)
     line = re.sub(r'\n* *<h6[^>]*>(.*)</h6> *\n*', r'\n****** \1\n', line, flags=re.I)
+    
+    
+    # Display or inline equations present as images with MathJax in alt:
+    #  Note: '> </a>' has '&nbsp;' already replaced by ' '
+    line = re.sub(r'<tbody><tr><td nowrap="nowrap"><a name="[^"]*"> </a><img[^>]*alt="\\begin{displaymath}%', r'\\begin{equation}', line, flags=re.I)
+    line = re.sub(r'(<img[^>]*)*alt="\\begin{displaymath}%', r'\n\\begin{equation}', line, flags=re.I)
+    line = re.sub(r'\\end{displaymath}"[^>]*>', r'\\end{equation}\n', line, flags=re.I)
+    line = re.sub(r'(<img[^>]*)*alt="(\$[^$]*\$)"[^>]*>', r'\n\2', line, flags=re.I)
+    
+    # Replace sub and superscripts with inline math:
+    # x$_i$, x$^2$ do NOT display sub and superscripts in Orgmode, you need to include x: $x_i$ and $x^2$.
+    # Leading space:
+    line = re.sub(r' ([^ ]*)<sub>([^<])</sub>',  r' $\1_\2$',   line, flags=re.I)
+    line = re.sub(r' ([^ ]*)<sub>([^<]*)</sub>', r' $\1_{\2}$', line, flags=re.I)
+    line = re.sub(r' ([^ ]*)<sup>([^<])</sup>',  r' $\1^\2$',   line, flags=re.I)
+    line = re.sub(r' ([^ ]*)<sup>([^<]*)</sup>', r' $\1^{\2}$', line, flags=re.I)
+    
+    # Start of line:
+    line = re.sub(r'^([^ ]*)<sub>([^<])</sub>',  r'$\1_\2$',   line, flags=re.I)
+    line = re.sub(r'^([^ ]*)<sub>([^<]*)</sub>', r'$\1_{\2}$', line, flags=re.I)
+    line = re.sub(r'^([^ ]*)<sup>([^<])</sup>',  r'$\1^\2$',   line, flags=re.I)
+    line = re.sub(r'^([^ ]*)<sup>([^<]*)</sup>', r'$\1^{\2}$', line, flags=re.I)
+    
+    # Math spacing:
+    line = re.sub(r'\\space *', r' ', line, flags=re.I)
+    
     
     # Figures and captions:
     # Doesn't work: multiline...  line = re.sub(r'^ *<div[^>]*><figure><div><div><picture><source media="[^"]*"><source media="[^"]*"><img alt="[^"]*" src="([^"]*)" class="moz-reader-block-img" moz-reader-center="true"></picture></div><p>([^<]*)</p></div><figcaption>([^<]*)</figcaption></figure></div>', r'\1  Caption: \3 (credit: \2)', line, flags=re.I)
@@ -317,6 +345,13 @@ def line_html_to_orgmode(line):
     line = re.sub(r'<hr[^>]*>', r'----------------------------------------------------------------------------------------------------', line, flags=re.I)
     
     
+    # Leftover table stuff.  NOTE: not yet dealing with tables anywhere!
+    line = re.sub(r'</*table[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r'</*tbody[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r'</*tr[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r'</*td[^>]*>', r'', line, flags=re.I)
+    line = re.sub(r'</*th[^>]*>', r'', line, flags=re.I)
+    
     # Leftover <span class=""></span>:
     line = re.sub(r'( *)<span( dir="[^"]*")*( class="[^"]*")*>([^<]*)</span>( *)\n*', r'\1\4\5', line, flags=re.I)
     line = re.sub(r' *<span[^>]*>', r'', line, flags=re.I)
@@ -334,7 +369,15 @@ def line_html_to_orgmode(line):
     line = re.sub(r'^ *\+ *$', r'', line, flags=re.I)
     line = re.sub(r"^ *Pocket provides a quiet, calm space that's perfect for reading. It *$", r'', line, flags=re.I)
     line = re.sub(r"to privacy you've come to expect from Firefox and Mozilla.", r'', line, flags=re.I)
+    line = re.sub(r'^ *Close Reader View *\n*', r'', line, flags=re.I)
+    line = re.sub(r'^ *Type controls *\n*', r'', line, flags=re.I)
+    line = re.sub(r'^ *Voice:Default *\n*', r'', line, flags=re.I)
     line = re.sub(r'^ *$', r'', line, flags=re.I)
+    
+
+    # Last fixes:
+    line = re.sub(r'\$\\AA\^', r'$A^', line, flags=re.I)  # Angstroem - NOTE: \AA doesn't work in math mode, e.g. after adding converting to $\AA^{-1}$
+    line = re.sub(r'\$\\AA_', r'$A_', line, flags=re.I)   # Alternatives, like \text{\AA} seem to freeze Orgmode rendering.
     
     return line
 
