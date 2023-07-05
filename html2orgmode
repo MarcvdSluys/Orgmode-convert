@@ -44,8 +44,13 @@ def get_arguments():
     import sys
     
     # Parse command-line arguments:
-    parser = argparse.ArgumentParser(description="Try to convert a html file to Orgmode.",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
+    parser = argparse.ArgumentParser(description='''Try to convert a html file to Orgmode.
+    
+  Aim at code saved from Firefox Read view (the hope is that this is relatively uniform):
+    1. Load the page in Firefox;
+    2. Activate Read view;
+    3. Select File > Save as > Web page (, complete).''',
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)  # Use capital, period, add default values
     
     # Required arguments:
     parser.add_argument("infile",            type=str, default=None, help="name of the input html file (file.html/.htm/.xml)")
